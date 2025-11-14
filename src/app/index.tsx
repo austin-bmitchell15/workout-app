@@ -1,14 +1,11 @@
-import { supabase } from '@/services/supabase';
-import { useSession } from '@/providers/session-provider';
-import { View, Text, Button } from 'react-native';
+import { Redirect } from 'expo-router';
 
-export default function Index() {
-  const { session } = useSession();
+export default function RootIndex() {
+  // This component will never be seen by the user.
+  // The `app/_layout.js` component will immediately redirect
+  // to either '/(auth)/login' or '/(app)'.
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Welcome, {session?.user?.email}</Text>
-      <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
-    </View>
-  );
+  // We can just redirect to the main app group as a fallback,
+  // but the logic in _layout.js will override this.
+  return <Redirect href="/(app)" />;
 }
