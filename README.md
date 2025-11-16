@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# Workout Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile application to track your workouts, built with React Native and Expo.
+
+## Features
+
+*   User authentication (Sign up, Sign in)
+*   Log workouts with exercises and sets
+*   View workout history
+*   Create and manage workout templates
+
+## Technologies
+
+*   [React Native](https://reactnative.dev/)
+*   [Expo](https://expo.dev/)
+*   [Supabase](https://supabase.io/) for backend and authentication
+*   [React Navigation](https://reactnavigation.org/) for navigation
+*   [TypeScript](https://www.typescriptlang.org/)
+
+## Project Structure
+
+The project is organized into the following directories:
+
+*   `src/app`: Contains the main application logic, including screens and navigation.
+*   `src/components`: Contains reusable components used throughout the application.
+*   `src/constants`: Contains constants such as theme colors.
+*   `src/services`: Contains services, such as the Supabase client.
+*   `assets`: Contains static assets such as images and fonts.
 
 ## Get started
 
-1. Install dependencies
+1.  Install dependencies
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
-2. Start the app
+2.  Set up your environment variables. Create a `.env` file in the root of the project and add the following:
 
-   ```bash
-   npx expo start
-   ```
+    ```
+    EXPO_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+    EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+    ```
 
-In the output, you'll find options to open the app in a
+3.  Start the app
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+    ```bash
+    npx expo start
+    ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Running Tests
 
-## Get a fresh project
-
-When you're ready, run:
+To run the unit tests, use the following command:
 
 ```bash
-npm run reset-project
+npm test
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
