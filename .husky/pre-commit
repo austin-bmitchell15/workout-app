@@ -8,3 +8,6 @@ yarn typecheck || exit 1
 
 echo "2. Running Lint-Staged..."
 npx lint-staged || exit 1
+
+echo "3. Running Tests..."
+yarn test --passWithNoTests || exit 1

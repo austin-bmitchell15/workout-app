@@ -1,35 +1,32 @@
-# .github/workflows/main.yml
-name: CI (Lint & Type Check)
+name: CI
 
 on:
   push:
-    branches: ['main'] # Or "master"
+    branches: ['main']
   pull_request:
-    branches: ['main'] # Or "master"
+    branches: ['main']
 
 jobs:
-  check:
+  quality-check:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Check out your repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js (version 18 is a good, stable choice)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn' # <--- SOPHISTICATED: Caches node_modules for speed
 
-      # Step 3: Install dependencies (using yarn)
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Step 4: Run the linter
-      - name: Run ESLint
+      - name: Run Linter
         run: yarn lint
 
-      # Step 5: Run the TypeScript type checker
-      - name: Run Type Check
+      - name: Run Type Checker
         run: yarn typecheck
+
+      - name: Run Unit Tests
+        run: yarn test
