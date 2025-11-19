@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'; // Import useRef
+import React, { useState } from 'react'; // removed useRef
 import {
   View,
   Text,
@@ -7,15 +7,14 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useAuth } from '../../app/_layout'; // Use our auth hook
+import { useAuth } from '../../app/_layout';
 import { supabase } from '../../services/supabase';
 import { LocalWorkout, LocalExercise } from '../types';
 import ExerciseLogger from './ExerciseLogger';
 import ExercisePickerModal from './ExercisePickerModal';
-import StyledButton from '../common/StyledButton'; // A better-looking button
-import { BottomSheetModal } from '@gorhom/bottom-sheet'; // Import BottomSheetModal type
+import StyledButton from '../common/StyledButton';
 
-// Helper to generate temporary IDs for React keys
+// Helper to generate temporary IDs
 const generateLocalId = () =>
   `local-${Math.random().toString(36).substring(2, 9)}`;
 const KG_TO_LBS = 2.20462;
@@ -27,18 +26,17 @@ const newWorkoutTemplate: LocalWorkout = {
 };
 
 export default function ActiveWorkout() {
-  const { session, profile } = useAuth(); // Get profile
+  const { session, profile } = useAuth();
   const [workout, setWorkout] = useState<LocalWorkout>(newWorkoutTemplate);
-  // const [isPickerOpen, setIsPickerOpen] = useState(false); // REMOVE THIS
   const [isSaving, setIsSaving] = useState(false);
 
-  // ADD THIS REF
-  const exercisePickerModalRef = useRef<BottomSheetModal>(null);
+  // 1. Re-introduce the simple state variable
+  const [isPickerVisible, setPickerVisible] = useState(false);
 
   const preferredUnit = profile?.preferred_unit || 'kg';
 
-  // --- Main Save Logic (Phase 2, Step 4) ---
   const handleFinishWorkout = async () => {
+    // ... (Keep existing save logic unchanged) ...
     if (!session?.user) {
       Alert.alert('Error', 'You must be logged in to save a workout.');
       return;
@@ -52,7 +50,6 @@ export default function ActiveWorkout() {
     const user = session.user;
 
     try {
-      // 1. Insert into `workouts`
       const { data: workoutData, error: workoutError } = await supabase
         .from('workouts')
         .insert({
@@ -66,7 +63,6 @@ export default function ActiveWorkout() {
       if (workoutError) throw workoutError;
       const newWorkoutId = workoutData.id;
 
-      // 2. Loop and insert `workout_exercises`
       for (const ex of workout.exercises) {
         const { data: woExerciseData, error: woExerciseError } = await supabase
           .from('workout_exercises')
@@ -82,12 +78,8 @@ export default function ActiveWorkout() {
         if (woExerciseError) throw woExerciseError;
         const newWorkoutExerciseId = woExerciseData.id;
 
-        // 3. Loop and insert `sets`
         const setsToInsert = ex.sets.map(s => {
           const rawWeight = Number(s.weight) || 0;
-
-          // --- CONVERSION LOGIC ---
-          // Convert to KG before saving if user preference is LBS
           const weightInKg =
             preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
 
@@ -95,7 +87,7 @@ export default function ActiveWorkout() {
             user_id: user.id,
             workout_exercise_id: newWorkoutExerciseId,
             reps: Number(s.reps) || 0,
-            weight: weightInKg, // Always save in KG
+            weight: weightInKg,
             set_number: s.set_number,
           };
         });
@@ -108,10 +100,8 @@ export default function ActiveWorkout() {
         }
       }
 
-      // 4. Clear the local state
       Alert.alert('Success!', 'Workout saved.');
       setWorkout(newWorkoutTemplate);
-      // TODO: Navigate to history tab
     } catch (error) {
       console.error('Error saving workout:', error);
       if (error instanceof Error) {
@@ -122,9 +112,6 @@ export default function ActiveWorkout() {
     }
   };
 
-  // --- Local State Management ---
-
-  // Called from the modal when an exercise is picked
   const handleAddExercise = (exerciseFromLibrary: {
     id: string;
     name: string;
@@ -145,11 +132,11 @@ export default function ActiveWorkout() {
       ...prev,
       exercises: [...prev.exercises, newExercise],
     }));
-    // setIsPickerOpen(false); // REMOVE THIS
-    exercisePickerModalRef.current?.dismiss(); // CLOSE THE NEW MODAL
+
+    // 2. Close the modal using state
+    setPickerVisible(false);
   };
 
-  // Called from the ExerciseLogger
   const handleRemoveExercise = (localId: string) => {
     setWorkout(prev => ({
       ...prev,
@@ -157,7 +144,6 @@ export default function ActiveWorkout() {
     }));
   };
 
-  // Generic handler to update any part of the workout state
   const handleExerciseChange = (updatedExercise: LocalExercise) => {
     setWorkout(prev => ({
       ...prev,
@@ -194,7 +180,6 @@ export default function ActiveWorkout() {
         multiline
       />
 
-      {/* Exercise List */}
       <View style={styles.exerciseList}>
         {workout.exercises.map(ex => (
           <ExerciseLogger
@@ -202,16 +187,16 @@ export default function ActiveWorkout() {
             exercise={ex}
             onChange={handleExerciseChange}
             onRemove={handleRemoveExercise}
-            generateLocalId={generateLocalId} // Pass helper
-            preferredUnit={preferredUnit} // Pass unit preference down
+            generateLocalId={generateLocalId}
+            preferredUnit={preferredUnit}
           />
         ))}
       </View>
 
-      {/* Action Buttons */}
+      {/* 3. Update Button to toggle state */}
       <StyledButton
         title="+ Add Exercise"
-        onPress={() => exercisePickerModalRef.current?.present()} // CHANGE THIS
+        onPress={() => setPickerVisible(true)}
       />
       <StyledButton
         title="Finish Workout"
@@ -240,10 +225,11 @@ export default function ActiveWorkout() {
         style={{ marginTop: 10 }}
       />
 
-      {/* The Modal */}
+      {/* 4. Pass standard props to the new Modal component */}
       <ExercisePickerModal
-        ref={exercisePickerModalRef} // CHANGE THIS
-        onExerciseSelect={handleAddExercise} // CHANGE THIS
+        visible={isPickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onExerciseSelect={handleAddExercise}
       />
     </View>
   );

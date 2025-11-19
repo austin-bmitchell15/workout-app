@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, forwardRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,45 +6,41 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Modal,
+  FlatList,
+  SafeAreaView,
 } from 'react-native';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../app/_layout';
 import { ExerciseLibraryItem } from '../types';
-import {
-  BottomSheetModal,
-  BottomSheetHandle,
-  BottomSheetFlatList,
-} from '@gorhom/bottom-sheet';
+import { FontAwesome } from '@expo/vector-icons';
 
 type ExercisePickerModalProps = {
+  visible: boolean;
+  onClose: () => void;
   onExerciseSelect: (exercise: ExerciseLibraryItem) => void;
 };
 
-// We use forwardRef to pass the ref from ActiveWorkout into the BottomSheetModal
-const ExercisePickerModal = forwardRef<
-  BottomSheetModal,
-  ExercisePickerModalProps
->(({ onExerciseSelect }, ref) => {
+export default function ExercisePickerModal({
+  visible,
+  onClose,
+  onExerciseSelect,
+}: ExercisePickerModalProps) {
   const { session } = useAuth();
   const [exercises, setExercises] = useState<ExerciseLibraryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // variables
-  const snapPoints = useMemo(() => ['50%', '85%'], []);
-
-  // Fetch exercises from the library
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user && visible) {
       setLoading(true);
       const fetchExercises = async () => {
-        // Fetch all public exercises OR exercises created by the user
         const { data, error } = await supabase
           .from('exercise_library')
           .select('id, name, image_url')
           .or(`is_public.eq.true,created_by.eq.${session.user.id}`)
-          .ilike('name', `%${searchTerm}%`) // Filter by search term
-          .limit(50); // Limit results
+          .ilike('name', `%${searchTerm}%`)
+          .limit(50);
 
         if (error) {
           Alert.alert('Error', 'Could not fetch exercises');
@@ -54,111 +50,122 @@ const ExercisePickerModal = forwardRef<
         }
         setLoading(false);
       };
-      // Debounce search
+
       const timer = setTimeout(() => {
         fetchExercises();
-      }, 300); // Wait 300ms after user stops typing
+      }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [searchTerm, session]); // Re-fetch on search or session change
+  }, [searchTerm, session, visible]);
 
   const renderItem = ({ item }: { item: ExerciseLibraryItem }) => (
     <TouchableOpacity
       style={styles.item}
       onPress={() => onExerciseSelect(item)}>
       <Text style={styles.itemText}>{item.name}</Text>
+      <FontAwesome name="plus-circle" size={24} color="#007bff" />
     </TouchableOpacity>
   );
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      index={1} // Start at 85%
-      snapPoints={snapPoints}
-      handleComponent={props => (
-        <View style={styles.handleContainer}>
-          <BottomSheetHandle {...props} />
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet" // This gives the nice iOS card effect
+      onRequestClose={onClose}>
+      <SafeAreaView style={styles.modalContainer}>
+        {/* Header */}
+        <View style={styles.header}>
           <Text style={styles.title}>Add Exercise</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <FontAwesome name="times" size={20} color="#666" />
+          </TouchableOpacity>
         </View>
-      )}>
-      <View style={styles.contentContainer}>
+
+        {/* Search Bar */}
         <TextInput
           style={styles.searchInput}
           placeholder="Search exercises..."
           placeholderTextColor="#888"
           value={searchTerm}
           onChangeText={setSearchTerm}
+          autoFocus={false}
         />
-        {loading ? (
-          <Text style={styles.emptyText}>Loading...</Text>
-        ) : (
-          <BottomSheetFlatList
-            data={exercises}
-            keyExtractor={(item: ExerciseLibraryItem) => item.id}
-            renderItem={renderItem}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No exercises found.</Text>
-            }
-          />
-        )}
-      </View>
-    </BottomSheetModal>
+
+        {/* List */}
+        <View style={styles.listContainer}>
+          {loading ? (
+            <Text style={styles.emptyText}>Loading...</Text>
+          ) : (
+            <FlatList
+              data={exercises}
+              keyExtractor={item => item.id}
+              renderItem={renderItem}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No exercises found.</Text>
+              }
+            />
+          )}
+        </View>
+      </SafeAreaView>
+    </Modal>
   );
-});
-
-// Add this line to fix the linter error
-ExercisePickerModal.displayName = 'ExercisePickerModal';
-
-export default ExercisePickerModal;
+}
 
 const styles = StyleSheet.create({
-  contentContainer: {
+  modalContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  handleContainer: {
-    backgroundColor: '#f5f5f5',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: 'white',
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 5,
+  },
+  closeButton: {
+    padding: 5,
   },
   searchInput: {
-    height: 45,
-    borderColor: '#ccc',
-    borderWidth: 1,
+    height: 50,
+    backgroundColor: 'white',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 15,
-    marginHorizontal: 15,
-    backgroundColor: 'white',
+    margin: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
     fontSize: 16,
-    color: '#000',
+  },
+  listContainer: {
+    flex: 1,
   },
   item: {
     backgroundColor: 'white',
-    padding: 20,
-    marginVertical: 8,
+    padding: 15,
+    marginVertical: 5,
     marginHorizontal: 15,
     borderRadius: 8,
-    borderColor: '#eee',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderWidth: 1,
+    borderColor: '#eee',
   },
   itemText: {
-    fontSize: 18,
-    color: '#000',
+    fontSize: 16,
+    fontWeight: '500',
   },
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
-    fontSize: 16,
     color: '#777',
   },
 });
