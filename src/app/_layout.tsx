@@ -1,4 +1,4 @@
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // MUST be first
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter, Slot } from 'expo-router';
 import { supabase } from '../services/supabase';
@@ -7,7 +7,6 @@ import { View, ActivityIndicator } from 'react-native';
 import { Profile } from '../components/types';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
-// Define the shape of the Auth context
 interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
@@ -15,7 +14,6 @@ interface AuthContextType {
   setProfile: (profile: Profile | null) => void;
 }
 
-// Create an Auth Context
 const AuthContext = createContext<AuthContextType>({
   session: null,
   profile: null,
@@ -23,7 +21,6 @@ const AuthContext = createContext<AuthContextType>({
   setProfile: () => {},
 });
 
-// Custom hook to use the session and profile
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -32,7 +29,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Root layout component
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -40,7 +36,6 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
@@ -50,7 +45,6 @@ export default function RootLayout() {
       }
     });
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -74,7 +68,6 @@ export default function RootLayout() {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        // PGRST116 means no row was found
         throw error;
       }
       if (data) {
@@ -90,12 +83,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading) return;
 
-    // Redirect user based on session
     if (!session) {
-      // No session, send to login
       router.replace('/(auth)/login');
     } else if (session) {
-      // User is logged in, send to the main app
       router.replace('/(app)');
     }
   }, [session, loading, router]);
@@ -108,7 +98,6 @@ export default function RootLayout() {
     );
   }
 
-  // Provide the session to all child routes
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>

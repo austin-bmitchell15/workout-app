@@ -1,6 +1,3 @@
-// This file defines the shapes of our local, in-progress workout data.
-// These are different from our database types, as they include temporary local IDs.
-
 export interface LocalSet {
   local_id: string;
   reps: string;
@@ -9,10 +6,10 @@ export interface LocalSet {
 }
 
 export interface LocalExercise {
-  local_id: string; // For React key
-  exercise_library_id: string; // From DB
-  name: string; // For display
-  image_url?: string; // For display
+  local_id: string;
+  exercise_library_id: string;
+  name: string;
+  image_url?: string;
   notes: string;
   sets: LocalSet[];
 }
@@ -23,12 +20,10 @@ export interface LocalWorkout {
   exercises: LocalExercise[];
 }
 
-// This will be the type for an item from our database
 export interface ExerciseLibraryItem {
   id: string;
   name: string;
   image_url?: string;
-  // ... other fields if needed
 }
 
 // --- DATABASE TYPES ---

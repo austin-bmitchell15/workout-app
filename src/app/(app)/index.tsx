@@ -8,10 +8,9 @@ import {
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import StyledButton from '../../components/common/StyledButton';
-import { useAuth } from '../_layout'; // Import useAuth
+import { useAuth } from '../_layout';
 import { FontAwesome } from '@expo/vector-icons';
 
-// A new component for dashboard cards
 const DashboardCard = ({
   title,
   icon,
@@ -29,7 +28,7 @@ const DashboardCard = ({
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { profile } = useAuth(); // Get profile to welcome the user
+  const { profile } = useAuth();
 
   return (
     <ScrollView style={styles.container}>
@@ -93,7 +92,7 @@ const styles = StyleSheet.create({
   },
   startButton: {
     margin: 15,
-    paddingVertical: 20, // Make it bigger
+    paddingVertical: 20,
   },
   cardContainer: {
     flexDirection: 'row',
@@ -104,12 +103,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 8,
-    width: '45%', // Two cards per row
+    width: '45%',
     padding: 20,
     marginVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    // Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

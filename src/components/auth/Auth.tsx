@@ -1,36 +1,21 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View, Button, TextInput } from 'react-native';
-import { supabase } from '@/services/supabase';
+import { StyleSheet, View, Button, TextInput } from 'react-native';
+import { signInWithEmail, signUpWithEmail } from '@/services/auth/AuthService';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function signInWithEmail() {
+  async function handleSignIn() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
-
-    if (error) Alert.alert(error.message);
+    await signInWithEmail(email, password);
     setLoading(false);
   }
 
-  async function signUpWithEmail() {
+  async function handleSignUp() {
     setLoading(true);
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-
-    if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert('Please check your inbox for email verification!');
+    await signUpWithEmail(email, password);
     setLoading(false);
   }
 
@@ -57,14 +42,14 @@ export default function Auth() {
         <Button
           title="Sign in"
           disabled={loading}
-          onPress={() => signInWithEmail()}
+          onPress={() => handleSignIn()}
         />
       </View>
       <View style={styles.verticallySpaced}>
         <Button
           title="Sign up"
           disabled={loading}
-          onPress={() => signUpWithEmail()}
+          onPress={() => handleSignUp()}
         />
       </View>
     </View>

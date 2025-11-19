@@ -1,4 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx lint-staged
+exec < /dev/tty
+
+echo "1. Running Typecheck..."
+yarn typecheck || exit 1
+
+echo "2. Running Lint-Staged..."
+npx lint-staged || exit 1

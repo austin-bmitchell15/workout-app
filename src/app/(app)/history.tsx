@@ -21,7 +21,7 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchWorkouts = async () => {
+  const fetchWorkouts = useCallback(async () => {
     if (!session?.user) return;
 
     try {
@@ -29,7 +29,7 @@ export default function HistoryScreen() {
         .from('workouts')
         .select('*')
         .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false }); // Newest first
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setWorkouts(data || []);
@@ -41,9 +41,8 @@ export default function HistoryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [session]);
 
-  // useFocusEffect will re-fetch data every time the user visits this tab
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -66,7 +65,6 @@ export default function HistoryScreen() {
       </View>
       <FontAwesome name="chevron-right" size={16} color="#ccc" />
     </TouchableOpacity>
-    // TODO: On press, open a modal or navigate to a details screen
   );
 
   if (loading) {

@@ -16,15 +16,13 @@ export default function SettingsScreen() {
   const { session, profile, setProfile } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Use local state to manage the toggle optimistically
   const currentUnit = profile?.preferred_unit || 'kg';
 
   const handleUnitChange = async (newUnit: 'kg' | 'lbs') => {
     if (!session?.user || !profile) return;
-    if (newUnit === currentUnit) return; // No change
+    if (newUnit === currentUnit) return;
 
     setLoading(true);
-    // Optimistically update the context
     const oldProfile = profile;
     setProfile({ ...profile, preferred_unit: newUnit });
 
@@ -35,7 +33,6 @@ export default function SettingsScreen() {
 
     if (error) {
       Alert.alert('Error', 'Could not save your preference.');
-      // Revert on error
       setProfile(oldProfile);
     }
     setLoading(false);
@@ -47,7 +44,6 @@ export default function SettingsScreen() {
     if (error) {
       Alert.alert('Error', 'Could not sign out.');
     }
-    // The root _layout.tsx will handle redirecting to login
     setLoading(false);
   };
 

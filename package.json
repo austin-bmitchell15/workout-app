@@ -10,7 +10,9 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run format && npm run typecheck"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -51,6 +53,8 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@expo/metro-runtime": "^6.1.2",
     "@react-native-community/eslint-config": "^3.2.0",
     "@types/react": "~19.1.0",
     "eslint": "^9.39.1",

@@ -10,7 +10,7 @@ export default function AppLayout() {
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#007bff', // Example header color
+          backgroundColor: '#007bff',
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -37,7 +37,7 @@ export default function AppLayout() {
         name="log-workout"
         options={{
           title: 'Log New Workout',
-          presentation: 'modal', // Opens as a pop-up
+          presentation: 'modal',
         }}
       />
       <Stack.Screen

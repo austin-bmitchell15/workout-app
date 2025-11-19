@@ -20,12 +20,12 @@ export default function TemplatesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (!session?.user) return;
 
     try {
       const { data, error } = await supabase
-        .from('workout_templates') // As per our plan
+        .from('workout_templates')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
@@ -40,9 +40,8 @@ export default function TemplatesScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [session]);
 
-  // useFocusEffect will re-fetch data every time the user visits this tab
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
@@ -61,7 +60,6 @@ export default function TemplatesScreen() {
       <StyledButton
         title="Start"
         onPress={() => {
-          // TODO: Add logic to start a workout from this template
           Alert.alert('Start Workout', `Start from ${item.name}?`);
         }}
       />

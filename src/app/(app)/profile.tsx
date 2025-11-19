@@ -7,7 +7,6 @@ import StyledButton from '../../components/common/StyledButton';
 export default function ProfileScreen() {
   const { profile } = useAuth();
 
-  // Placeholder function for updating username
   const handleUpdateUsername = () => {
     Alert.alert(
       'Not Implemented',

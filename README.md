@@ -4,28 +4,28 @@ A mobile application to track your workouts, built with React Native and Expo.
 
 ## Features
 
-*   User authentication (Sign up, Sign in)
-*   Log workouts with exercises and sets
-*   View workout history
-*   Create and manage workout templates
+- User authentication (Sign up, Sign in)
+- Log workouts with exercises and sets
+- View workout history
+- Create and manage workout templates
 
 ## Technologies
 
-*   [React Native](https://reactnative.dev/)
-*   [Expo](https://expo.dev/)
-*   [Supabase](https://supabase.io/) for backend and authentication
-*   [React Navigation](https://reactnavigation.org/) for navigation
-*   [TypeScript](https://www.typescriptlang.org/)
+- [React Native](https://reactnative.dev/)
+- [Expo](https://expo.dev/)
+- [Supabase](https://supabase.io/) for backend and authentication
+- [React Navigation](https://reactnavigation.org/) for navigation
+- [TypeScript](https://www.typescriptlang.org/)
 
 ## Project Structure
 
 The project is organized into the following directories:
 
-*   `src/app`: Contains the main application logic, including screens and navigation.
-*   `src/components`: Contains reusable components used throughout the application.
-*   `src/constants`: Contains constants such as theme colors.
-*   `src/services`: Contains services, such as the Supabase client.
-*   `assets`: Contains static assets such as images and fonts.
+- `src/app`: Contains the main application logic, including screens and navigation.
+- `src/components`: Contains reusable components used throughout the application.
+- `src/constants`: Contains constants such as theme colors.
+- `src/services`: Contains services, such as the Supabase client.
+- `assets`: Contains static assets such as images and fonts.
 
 ## Get started
 
