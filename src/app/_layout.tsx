@@ -1,6 +1,11 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { useRouter, Slot } from 'expo-router';
+import {
+  useRouter,
+  Slot,
+  useSegments,
+  useRootNavigationState,
+} from 'expo-router';
 import { supabase } from '../services/supabase';
 import { Session } from '@supabase/supabase-js';
 import { View, ActivityIndicator } from 'react-native';
@@ -33,18 +38,29 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
   const router = useRouter();
+  const segments = useSegments();
+  const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    // Fetch the session on mount
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session) {
+          fetchProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error('Session check failed:', err);
+        setLoading(false); // Ensure we don't get stuck on spinner
+      });
 
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,6 +69,7 @@ export default function RootLayout() {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        setLoading(false);
       }
     });
 
@@ -80,20 +97,28 @@ export default function RootLayout() {
     }
   };
 
+  // --- NAVIGATION PROTECTION LOGIC ---
   useEffect(() => {
     if (loading) return;
 
-    if (!session) {
+    // Wait for navigation to be ready
+    if (!rootNavigationState?.key) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!session && !inAuthGroup) {
+      // If not logged in and not in (auth) group, go to login
       router.replace('/(auth)/login');
-    } else if (session) {
+    } else if (session && inAuthGroup) {
+      // If logged in and stuck in (auth) group, go to app
       router.replace('/(app)');
     }
-  }, [session, loading, router]);
+  }, [session, loading, segments, rootNavigationState?.key]);
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#007bff" />
       </View>
     );
   }
