@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
   Alert,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-// Change the import to use the legacy module if you want a quick fix,
-// OR use the new API. Since `readAsStringAsync` is simple, the legacy import is the easiest drop-in replacement.
 import * as FileSystem from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -20,7 +16,10 @@ import {
   ImportableWorkout,
 } from '@/services/ImportService';
 import { ThemedText } from '../themed-text';
+import { ThemedView } from '../themed-view'; // Import ThemedView
 import StyledButton from '../common/StyledButton';
+import StyledTextInput from '../common/StyledTextInput'; // Import StyledTextInput
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 type CsvImporterProps = {
   userId: string;
@@ -39,30 +38,28 @@ export default function CsvImporter({
     total: number;
   } | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  // Granular Control State
-  // Format: "workoutId-exerciseIndex"
   const [excludedExerciseKeys, setExcludedExerciseKeys] = useState<Set<string>>(
     new Set(),
   );
+
+  // Theme Hooks
+  const successColor = useThemeColor({}, 'success');
+  const iconColor = useThemeColor({}, 'icon');
+  const cardColor = useThemeColor({}, 'card');
+  const borderColor = useThemeColor({}, 'border');
+  const tintColor = useThemeColor({}, 'tint');
 
   const pickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['text/csv', 'text/comma-separated-values', 'application/csv'],
       });
-
       if (result.canceled) return;
-
       setLoading(true);
       const fileUri = result.assets[0].uri;
-
-      // Use the legacy import for readAsStringAsync
       const fileContent = await FileSystem.readAsStringAsync(fileUri);
-
       const parsed = parseStrongCsv(fileContent);
       setWorkouts(parsed);
-      // Select all workouts by default
       setSelectedIds(new Set(parsed.map(w => w.id)));
       setLoading(false);
     } catch (error) {
@@ -97,14 +94,12 @@ export default function CsvImporter({
     }
   };
 
-  // Granular Control: Rename Workout
   const updateWorkoutName = (id: string, newName: string) => {
     setWorkouts(prev =>
       prev.map(w => (w.id === id ? { ...w, name: newName } : w)),
     );
   };
 
-  // Granular Control: Toggle Specific Exercise
   const toggleExerciseExclusion = (workoutId: string, index: number) => {
     const key = `${workoutId}-${index}`;
     const newSet = new Set(excludedExerciseKeys);
@@ -114,12 +109,10 @@ export default function CsvImporter({
   };
 
   const handleSave = async () => {
-    // Filter workouts that are unchecked
+    // ... logic same as before ...
     const selectedWorkouts = workouts.filter(w => selectedIds.has(w.id));
-
     if (selectedWorkouts.length === 0) return;
 
-    // Apply granular filters: Remove exercises that were unchecked
     const finalWorkoutsToImport = selectedWorkouts.map(w => ({
       ...w,
       exercises: w.exercises.filter(
@@ -127,11 +120,9 @@ export default function CsvImporter({
       ),
     }));
 
-    // Double check we didn't create empty workouts
     const validWorkouts = finalWorkoutsToImport.filter(
       w => w.exercises.length > 0,
     );
-
     if (validWorkouts.length === 0) {
       Alert.alert('Error', 'No exercises selected to import.');
       return;
@@ -157,9 +148,9 @@ export default function CsvImporter({
 
   if (workouts.length === 0) {
     return (
-      <View style={styles.container}>
+      <ThemedView style={styles.container}>
         <View style={styles.emptyState}>
-          <Ionicons name="document-text-outline" size={64} color="#ccc" />
+          <Ionicons name="document-text-outline" size={64} color={iconColor} />
           <ThemedText style={styles.emptyText}>
             Import workouts from Strong CSV
           </ThemedText>
@@ -167,35 +158,36 @@ export default function CsvImporter({
             title={loading ? 'Reading File...' : 'Select CSV File'}
             onPress={pickFile}
             disabled={loading}
+            testID="select-csv-btn"
           />
         </View>
-      </View>
+      </ThemedView>
     );
   }
 
   if (loading && progress) {
     return (
-      <View style={styles.container}>
+      <ThemedView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color={tintColor} />
           <ThemedText style={{ marginTop: 20 }}>
             Importing {progress.current} of {progress.total}...
           </ThemedText>
         </View>
-      </View>
+      </ThemedView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <ThemedView style={styles.container}>
+      <View style={[styles.header, { borderColor }]}>
         <ThemedText type="subtitle">Preview Import</ThemedText>
-        <TouchableOpacity onPress={toggleSelectAll}>
-          <Text style={styles.linkText}>
+        <TouchableOpacity onPress={toggleSelectAll} testID="toggle-select-all">
+          <ThemedText type="link">
             {selectedIds.size === workouts.length
               ? 'Deselect All'
               : 'Select All'}
-          </Text>
+          </ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -208,45 +200,56 @@ export default function CsvImporter({
           const isExpanded = expandedIds.has(item.id);
 
           return (
-            <View style={[styles.card, isSelected && styles.cardSelected]}>
-              {/* Card Header / Main Row */}
+            <ThemedView
+              style={[
+                styles.card,
+                { borderColor: isSelected ? tintColor : borderColor },
+              ]}>
               <View style={styles.cardHeader}>
-                <TouchableOpacity onPress={() => toggleSelection(item.id)}>
+                <TouchableOpacity
+                  onPress={() => toggleSelection(item.id)}
+                  testID={`workout-checkbox-${item.id}`}>
                   <Ionicons
                     name={isSelected ? 'checkbox' : 'square-outline'}
                     size={24}
-                    color={isSelected ? '#007bff' : '#ccc'}
+                    color={isSelected ? tintColor : iconColor}
                   />
                 </TouchableOpacity>
 
                 <View style={styles.cardInfo}>
-                  {/* Editable Name Input */}
-                  <TextInput
+                  <StyledTextInput
                     style={styles.nameInput}
                     value={item.name}
                     onChangeText={text => updateWorkoutName(item.id, text)}
                     placeholder="Workout Name"
+                    testID={`workout-name-input-${item.id}`}
                   />
-                  <Text style={styles.dateText}>
+                  <ThemedText style={styles.dateText}>
                     {item.date} • {item.duration}
-                  </Text>
+                  </ThemedText>
                 </View>
 
                 <TouchableOpacity
                   style={styles.expandButton}
-                  onPress={() => toggleExpand(item.id)}>
+                  onPress={() => toggleExpand(item.id)}
+                  testID={`expand-workout-${item.id}`}>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
                     size={20}
-                    color="#666"
+                    color={iconColor}
                   />
                 </TouchableOpacity>
               </View>
 
-              {/* Expanded Details View */}
               {isExpanded && (
-                <View style={styles.details}>
-                  <Text style={styles.detailsHeader}>Exercises:</Text>
+                <View
+                  style={[
+                    styles.details,
+                    { backgroundColor: cardColor, borderColor },
+                  ]}>
+                  <ThemedText style={styles.detailsHeader}>
+                    Exercises:
+                  </ThemedText>
                   {item.exercises.map((ex, idx) => {
                     const isExcluded = excludedExerciseKeys.has(
                       `${item.id}-${idx}`,
@@ -256,7 +259,8 @@ export default function CsvImporter({
                         key={idx}
                         style={styles.exerciseRow}
                         onPress={() => toggleExerciseExclusion(item.id, idx)}
-                        activeOpacity={0.7}>
+                        activeOpacity={0.7}
+                        testID={`exercise-row-${item.id}-${idx}`}>
                         <Ionicons
                           name={
                             isExcluded
@@ -264,38 +268,39 @@ export default function CsvImporter({
                               : 'checkmark-circle'
                           }
                           size={20}
-                          color={isExcluded ? '#ccc' : '#28a745'}
+                          color={isExcluded ? iconColor : successColor}
                           style={{ marginRight: 8 }}
                         />
                         <View style={{ flex: 1 }}>
-                          <Text
+                          <ThemedText
                             style={[
                               styles.detailText,
                               isExcluded && styles.strikeThrough,
                             ]}>
                             {ex.name}
-                          </Text>
-                          <Text style={styles.setSummary}>
+                          </ThemedText>
+                          <ThemedText style={styles.setSummary}>
                             {ex.sets.length} sets • Max:{' '}
                             {Math.max(...ex.sets.map(s => s.weight))} lbs
-                          </Text>
+                          </ThemedText>
                         </View>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
               )}
-            </View>
+            </ThemedView>
           );
         }}
       />
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderColor }]}>
         <StyledButton
           title={`Import ${selectedIds.size} Workouts`}
           onPress={handleSave}
           type="primary"
           disabled={selectedIds.size === 0}
+          testID="import-confirm-btn"
         />
         <StyledButton
           title="Cancel"
@@ -308,14 +313,13 @@ export default function CsvImporter({
           style={{ marginTop: 8 }}
         />
       </View>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   emptyState: {
     flex: 1,
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     marginBottom: 20,
-    color: '#666',
+    opacity: 0.7,
   },
   center: {
     flex: 1,
@@ -339,32 +343,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  linkText: {
-    color: '#007bff',
-    fontWeight: '600',
   },
   list: {
     padding: 16,
   },
   card: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     marginBottom: 10,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'transparent',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardSelected: {
-    borderColor: '#007bff',
-    backgroundColor: '#f8f9ff',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -374,33 +362,32 @@ const styles = StyleSheet.create({
   cardInfo: {
     flex: 1,
     marginLeft: 12,
+    gap: 4,
   },
   nameInput: {
+    height: 40,
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    borderWidth: 0,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    paddingBottom: 2,
-    marginBottom: 4,
+    borderRadius: 0,
+    paddingHorizontal: 0,
   },
   dateText: {
     fontSize: 12,
-    color: '#666',
+    opacity: 0.6,
   },
   expandButton: {
     padding: 8,
   },
   details: {
-    backgroundColor: '#fafafa',
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
   detailsHeader: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#888',
+    opacity: 0.5,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -412,21 +399,18 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#333',
     fontWeight: '500',
   },
   setSummary: {
     fontSize: 12,
-    color: '#777',
+    opacity: 0.7,
   },
   strikeThrough: {
     textDecorationLine: 'line-through',
-    color: '#999',
+    opacity: 0.5,
   },
   footer: {
     padding: 16,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
 });

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Button, TextInput, Alert } from 'react-native';
 import { signInWithEmail, signUpWithEmail } from '@/services/AuthService';
+import StyledTextInput from '../common/StyledTextInput';
+import { ThemedView } from '../themed-view';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -26,7 +28,7 @@ export default function Auth() {
   }
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <TextInput
           onChangeText={text => setEmail(text)}
@@ -36,7 +38,7 @@ export default function Auth() {
         />
       </View>
       <View style={styles.verticallySpaced}>
-        <TextInput
+        <StyledTextInput
           onChangeText={text => setPassword(text)}
           value={password}
           secureTextEntry={true}
@@ -58,7 +60,7 @@ export default function Auth() {
           onPress={() => handleSignUp()}
         />
       </View>
-    </View>
+    </ThemedView>
   );
 }
 

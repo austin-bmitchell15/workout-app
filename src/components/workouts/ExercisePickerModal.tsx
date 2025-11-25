@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
   Image,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { ExerciseLibraryItem } from '../types';
+import { ThemedText } from '../themed-text';
+import StyledTextInput from '../common/StyledTextInput';
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 type ExercisePickerModalProps = {
   visible: boolean;
@@ -21,7 +22,6 @@ type ExercisePickerModalProps = {
   onExerciseSelect: (exercise: ExerciseLibraryItem) => void;
 };
 
-// Extended type for internal use
 interface ExerciseItem extends ExerciseLibraryItem {
   primary_muscle_group?: string;
 }
@@ -35,6 +35,12 @@ export default function ExercisePickerModal({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Theme Hooks
+  const backgroundColor = useThemeColor({}, 'background');
+  const iconColor = useThemeColor({}, 'icon');
+  const borderColor = useThemeColor({}, 'border');
+  const tintColor = useThemeColor({}, 'tint');
+
   useEffect(() => {
     if (visible) {
       fetchExercises();
@@ -43,7 +49,6 @@ export default function ExercisePickerModal({
 
   const fetchExercises = async () => {
     setLoading(true);
-    // Fetch muscle group in addition to basic details
     const { data, error } = await supabase
       .from('exercise_library')
       .select('id, name, image_url, primary_muscle_group')
@@ -67,36 +72,30 @@ export default function ExercisePickerModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <SafeAreaView style={styles.modalContainer}>
+      <SafeAreaView style={[styles.modalContainer, { backgroundColor }]}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Add Exercise</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={24} color="#333" />
+        <View style={[styles.header, { borderColor }]}>
+          <ThemedText type="subtitle">Add Exercise</ThemedText>
+          <TouchableOpacity onPress={onClose} testID="close-modal-btn">
+            <Ionicons name="close" size={24} color={iconColor} />
           </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#888"
-            style={styles.searchIcon}
-          />
-          <TextInput
+          <StyledTextInput
             style={styles.searchInput}
             placeholder="Search exercises..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            clearButtonMode="while-editing"
+            testID="search-exercise-input"
           />
         </View>
 
         {/* List or Loading */}
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007bff" />
+            <ActivityIndicator size="large" color={tintColor} />
           </View>
         ) : (
           <FlatList
@@ -105,31 +104,46 @@ export default function ExercisePickerModal({
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.itemContainer}
-                onPress={() => onExerciseSelect(item)}>
+                style={[styles.itemContainer, { borderColor }]}
+                onPress={() => onExerciseSelect(item)}
+                testID={`exercise-item-${item.id}`}>
                 {item.image_url ? (
                   <Image
                     source={{ uri: item.image_url }}
                     style={styles.image}
                   />
                 ) : (
-                  <View style={[styles.image, styles.placeholderImage]}>
-                    <Ionicons name="barbell-outline" size={24} color="#ccc" />
+                  <View
+                    style={[
+                      styles.image,
+                      styles.placeholderImage,
+                      { borderColor },
+                    ]}>
+                    <Ionicons
+                      name="barbell-outline"
+                      size={24}
+                      color={iconColor}
+                    />
                   </View>
                 )}
 
                 <View style={styles.textContainer}>
-                  <Text style={styles.itemName}>{item.name}</Text>
+                  <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
                   {item.primary_muscle_group && (
                     <View style={styles.muscleBadge}>
-                      <Text style={styles.muscleText}>
+                      <ThemedText
+                        style={[styles.muscleText, { color: tintColor }]}>
                         {item.primary_muscle_group}
-                      </Text>
+                      </ThemedText>
                     </View>
                   )}
                 </View>
 
-                <Ionicons name="add-circle-outline" size={24} color="#007bff" />
+                <Ionicons
+                  name="add-circle-outline"
+                  size={24}
+                  color={tintColor}
+                />
               </TouchableOpacity>
             )}
           />
@@ -142,7 +156,6 @@ export default function ExercisePickerModal({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -150,28 +163,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f0f0f0',
-    margin: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-  },
-  searchIcon: {
-    marginRight: 8,
+    padding: 16,
+    paddingBottom: 8,
   },
   searchInput: {
-    flex: 1,
-    fontSize: 16,
-    height: 40,
+    height: 45, // Override default
   },
   loadingContainer: {
     flex: 1,
@@ -187,38 +185,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   image: {
     width: 50,
     height: 50,
     borderRadius: 4,
     marginRight: 12,
-    backgroundColor: '#eee',
+    backgroundColor: '#eee', // Fallback or could use theme card color
   },
   placeholderImage: {
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
   textContainer: {
     flex: 1,
     gap: 4,
   },
-  itemName: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
   muscleBadge: {
-    backgroundColor: '#eef6ff',
     alignSelf: 'flex-start',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 0,
     borderRadius: 4,
   },
   muscleText: {
     fontSize: 12,
-    color: '#007bff',
     fontWeight: '600',
   },
 });
