@@ -4,7 +4,11 @@ import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 export default function StyledTextInput({ style, ...props }: TextInputProps) {
   const textColor = useThemeColor({}, 'text');
-  const borderColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, 'border');
+  const placeholderColor = useThemeColor(
+    { light: '#888', dark: '#666' },
+    'icon',
+  );
 
   return (
     <TextInput
@@ -13,10 +17,7 @@ export default function StyledTextInput({ style, ...props }: TextInputProps) {
         { color: textColor, borderColor: borderColor },
         style,
       ]}
-      placeholderTextColor={useThemeColor(
-        { light: '#888', dark: '#ccc' },
-        'text',
-      )}
+      placeholderTextColor={placeholderColor}
       {...props}
     />
   );
