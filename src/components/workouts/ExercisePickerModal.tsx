@@ -3,17 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   Alert,
   Modal,
   FlatList,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../app/_layout';
 import { ExerciseLibraryItem } from '../types';
 import { FontAwesome } from '@expo/vector-icons';
+import StyledTextInput from '../common/StyledTextInput';
 
 type ExercisePickerModalProps = {
   visible: boolean;
@@ -84,10 +84,9 @@ export default function ExercisePickerModal({
         </View>
 
         {/* Search Bar */}
-        <TextInput
+        <StyledTextInput
           style={styles.searchInput}
           placeholder="Search exercises..."
-          placeholderTextColor="#888"
           value={searchTerm}
           onChangeText={setSearchTerm}
           autoFocus={false}
@@ -135,14 +134,8 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   searchInput: {
-    height: 50,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    paddingHorizontal: 15,
     margin: 15,
     borderWidth: 1,
-    borderColor: '#ddd',
-    fontSize: 16,
   },
   listContainer: {
     flex: 1,

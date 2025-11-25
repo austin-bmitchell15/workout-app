@@ -13,6 +13,6 @@ export default function LogWorkoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // Give it a solid background color again
+    backgroundColor: '#f5f5f5',
   },
 });

@@ -1,14 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LocalExercise, LocalSet } from '../types';
 import { FontAwesome } from '@expo/vector-icons';
 import SetLogger from './SetLogger'; // We'll create this next
+import StyledTextInput from '../common/StyledTextInput';
 
 type ExerciseLoggerProps = {
   exercise: LocalExercise;
@@ -62,7 +57,7 @@ export default function ExerciseLogger({
         </TouchableOpacity>
       </View>
 
-      <TextInput
+      <StyledTextInput
         style={styles.notesInput}
         placeholder="Notes"
         placeholderTextColor="#888"

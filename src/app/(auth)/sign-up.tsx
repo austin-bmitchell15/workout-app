@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { Link, router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { supabase } from '@/services/supabase';
+import StyledTextInput from '@/components/common/StyledTextInput';
+import StyledButton from '@/components/common/StyledButton';
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'tint');
 
   async function handleSignUp() {
     if (password !== confirmPassword) {
@@ -42,42 +40,34 @@ export default function SignUpScreen() {
       <ThemedText type="title">Create an Account</ThemedText>
 
       <ThemedView style={styles.inputContainer}>
-        <TextInput
-          style={[styles.input, { color: textColor, borderColor: textColor }]}
+        <StyledTextInput
           placeholder="Email"
-          placeholderTextColor={textColor}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        <TextInput
-          style={[styles.input, { color: textColor, borderColor: textColor }]}
+        <StyledTextInput
           placeholder="Password"
-          placeholderTextColor={textColor}
           value={password}
           onChangeText={setPassword}
+          autoCapitalize="none"
           secureTextEntry
         />
-        <TextInput
-          style={[styles.input, { color: textColor, borderColor: textColor }]}
+        <StyledTextInput
           placeholder="Confirm Password"
-          placeholderTextColor={textColor}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
         />
       </ThemedView>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: primaryColor }]}
+      <StyledButton
+        title={loading ? 'Logging in...' : 'Login'}
         onPress={handleSignUp}
-        disabled={loading}>
-        <ThemedText style={styles.buttonText}>
-          {loading ? 'Creating account...' : 'Sign Up'}
-        </ThemedText>
-      </TouchableOpacity>
-
+        type="primary"
+        isLoading={loading}
+      />
       <Link href="/login" style={styles.link}>
         <ThemedText type="link">Already have an account? Sign in</ThemedText>
       </Link>
@@ -95,18 +85,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     gap: 12,
   },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  button: {
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
+
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
