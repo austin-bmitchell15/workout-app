@@ -8,7 +8,7 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color'; // Import theme hook
+import { useThemeColor } from '@/hooks/theme/use-theme-color'; // Import theme hook
 
 interface StyledButtonProps extends TouchableOpacityProps {
   title: string;
@@ -25,7 +25,7 @@ export default function StyledButton({
   ...props
 }: StyledButtonProps) {
   const primaryColor = useThemeColor({}, 'tint'); // Use your global tint color
-  
+
   // Define dynamic styles based on type
   const getBackgroundColor = () => {
     if (props.disabled || isLoading) return '#ccc'; // Or a themed disabled color
@@ -42,20 +42,14 @@ export default function StyledButton({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        { backgroundColor: getBackgroundColor() },
-        style,
-      ]}
+      style={[styles.button, { backgroundColor: getBackgroundColor() }, style]}
       activeOpacity={0.7}
       disabled={props.disabled || isLoading}
       {...props}>
       {isLoading ? (
         <ActivityIndicator color={getTextColor()} />
       ) : (
-        <Text style={[styles.text, { color: getTextColor() }]}>
-          {title}
-        </Text>
+        <Text style={[styles.text, { color: getTextColor() }]}>{title}</Text>
       )}
     </TouchableOpacity>
   );

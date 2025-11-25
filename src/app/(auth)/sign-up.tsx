@@ -4,7 +4,7 @@ import { Link, router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
 import { supabase } from '@/services/supabase';
 import StyledTextInput from '@/components/common/StyledTextInput';
 import StyledButton from '@/components/common/StyledButton';
@@ -55,7 +55,7 @@ export default function SignUpScreen() {
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
-          autoCapitalize='none'
+          autoCapitalize="none"
           secureTextEntry
         />
         <StyledTextInput
@@ -66,8 +66,8 @@ export default function SignUpScreen() {
         />
       </ThemedView>
 
-      <StyledButton 
-        title={loading ? "Logging in..." : "Login"}
+      <StyledButton
+        title={loading ? 'Logging in...' : 'Login'}
         onPress={handleSignUp}
         type="primary"
         isLoading={loading}
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     gap: 12,
   },
-  
+
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
