@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import { z } from 'zod'; //
 import { supabase } from './supabase';
 import { LocalWorkout, LocalExercise, LocalSet } from '../components/types';
 import { saveWorkout } from './WorkoutService';
@@ -18,19 +19,23 @@ export interface ImportableWorkout {
   }[];
 }
 
-interface StrongCsvRow {
-  Date: string;
-  'Workout Name': string;
-  Duration: string;
-  'Exercise Name': string;
-  'Set Order': number;
-  Weight: number;
-  Reps: number;
-  Distance: number;
-  Seconds: number;
-  RPE: number;
-  Notes?: string;
-}
+// 1. Define Zod Schema for runtime validation
+const StrongCsvRowSchema = z.object({
+  Date: z.string(),
+  'Workout Name': z.string(),
+  Duration: z.string().optional().default(''),
+  'Exercise Name': z.string(),
+  'Set Order': z.coerce.number(), // Forces string "1" to number 1
+  Weight: z.coerce.number().optional().default(0), // "225.5" -> 225.5, "" -> 0
+  Reps: z.coerce.number().optional().default(0),
+  Distance: z.coerce.number().optional().default(0),
+  Seconds: z.coerce.number().optional().default(0),
+  RPE: z.coerce.number().optional().default(0),
+  Notes: z.string().optional(),
+});
+
+// 2. Infer the TypeScript type from the Schema (Single source of truth)
+type StrongCsvRow = z.infer<typeof StrongCsvRowSchema>;
 
 // Helper to find or create an exercise in the DB
 async function getOrCreateExerciseId(name: string): Promise<string> {
@@ -57,9 +62,10 @@ async function getOrCreateExerciseId(name: string): Promise<string> {
  * Does NOT interact with the database.
  */
 export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
-  const { data } = Papa.parse<StrongCsvRow>(csvContent, {
+  // Parse as 'unknown' first so we can validate it
+  const { data } = Papa.parse<unknown>(csvContent, {
     header: true,
-    dynamicTyping: true,
+    dynamicTyping: true, // Still helpful, but Zod does the heavy lifting
     skipEmptyLines: true,
   });
 
@@ -67,10 +73,31 @@ export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
     throw new Error('No data found in CSV');
   }
 
+  // 3. Validate Rows
+  const validRows: StrongCsvRow[] = [];
+  const errors: string[] = [];
+
+  data.forEach((row, index) => {
+    const result = StrongCsvRowSchema.safeParse(row);
+    if (result.success) {
+      validRows.push(result.data);
+    } else {
+      // Log error but don't crash. Good for debugging bad imports.
+      console.warn(`Skipping invalid row at index ${index}:`, result.error);
+      errors.push(`Row ${index + 1} is invalid`);
+    }
+  });
+
+  if (validRows.length === 0) {
+    throw new Error(
+      'No valid rows found in CSV. Please check the file format.',
+    );
+  }
+
   // Group by Workout (Date + Name)
   const groupedWorkouts = new Map<string, StrongCsvRow[]>();
 
-  data.forEach(row => {
+  validRows.forEach(row => {
     const key = `${row.Date}|${row['Workout Name']}`;
     if (!groupedWorkouts.has(key)) {
       groupedWorkouts.set(key, []);
