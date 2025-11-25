@@ -3,11 +3,12 @@ import { render, fireEvent, screen } from '@testing-library/react-native';
 import ExerciseLogger from '../ExerciseLogger';
 import { LocalExercise } from '@/components/types';
 
-// Mock theme hook for SetLogger dependency
+// Mock theme hook
 jest.mock('@/hooks/theme/use-theme-color', () => ({
   useThemeColor: () => '#000',
 }));
 
+// Testing
 describe('ExerciseLogger', () => {
   const mockExercise: LocalExercise = {
     local_id: 'ex-1',

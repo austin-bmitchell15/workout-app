@@ -7,6 +7,7 @@ jest.mock('@/hooks/theme/use-theme-color', () => ({
   useThemeColor: () => '#000',
 }));
 
+// Testing
 describe('WorkoutHistoryCard', () => {
   const mockWorkout = {
     id: '1',

@@ -7,6 +7,7 @@ export const saveWorkout = async (
   workout: LocalWorkout,
   userId: string,
   preferredUnit: 'kg' | 'lbs',
+  customCreatedAt?: string,
 ) => {
   // 1. Create the Workout Record
   const { data: workoutData, error: workoutError } = await supabase
@@ -15,15 +16,16 @@ export const saveWorkout = async (
       name: workout.name,
       notes: workout.notes,
       user_id: userId,
+      created_at: customCreatedAt,
     })
     .select()
     .single();
 
   if (workoutError) throw workoutError;
 
-  // 2. Process Exercises and Sets
   const newWorkoutId = workoutData.id;
 
+  // 2. Process Exercises and Sets
   for (const ex of workout.exercises) {
     const { data: woExerciseData, error: woExerciseError } = await supabase
       .from('workout_exercises')
@@ -39,16 +41,16 @@ export const saveWorkout = async (
     if (woExerciseError) throw woExerciseError;
 
     const newWorkoutExerciseId = woExerciseData.id;
+    console.log(newWorkoutExerciseId);
 
     const setsToInsert = ex.sets.map(s => {
       const rawWeight = Number(s.weight) || 0;
-      // Always store in KG or normalize here
       const weightInKg =
         preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
 
       return {
         user_id: userId,
-        workout_exercise_id: newWorkoutExerciseId,
+        workout_exercises_id: newWorkoutExerciseId,
         reps: Number(s.reps) || 0,
         weight: weightInKg,
         set_number: s.set_number,

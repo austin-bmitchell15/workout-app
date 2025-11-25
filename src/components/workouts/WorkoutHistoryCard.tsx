@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ThemedText } from '../themed-text';
 
-// Helper to format date
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString(undefined, {
@@ -13,13 +12,12 @@ export const formatDate = (dateString: string) => {
 };
 
 type WorkoutHistoryCardProps = {
-  workout: any; // Ideally use a stronger type
+  workout: any; // TODO: Define a type for this
 };
 
 export default function WorkoutHistoryCard({
   workout,
 }: WorkoutHistoryCardProps) {
-  // Calculate total sets for a quick summary
   const totalSets =
     workout.workout_exercises?.reduce(
       (acc: number, ex: any) => acc + (ex.sets?.length || 0),

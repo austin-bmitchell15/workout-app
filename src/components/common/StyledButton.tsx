@@ -8,13 +8,13 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
-import { useThemeColor } from '@/hooks/theme/use-theme-color'; // Import theme hook
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 interface StyledButtonProps extends TouchableOpacityProps {
   title: string;
   type?: 'primary' | 'secondary' | 'danger';
   style?: StyleProp<ViewStyle>;
-  isLoading?: boolean; // Add loading prop
+  isLoading?: boolean;
 }
 
 export default function StyledButton({
@@ -24,13 +24,13 @@ export default function StyledButton({
   isLoading = false,
   ...props
 }: StyledButtonProps) {
-  const primaryColor = useThemeColor({}, 'tint'); // Use your global tint color
+  const primaryColor = useThemeColor({}, 'tint');
 
   // Define dynamic styles based on type
   const getBackgroundColor = () => {
-    if (props.disabled || isLoading) return '#ccc'; // Or a themed disabled color
+    if (props.disabled || isLoading) return '#ccc';
     if (type === 'primary') return primaryColor;
-    if (type === 'danger') return '#f8d7da'; // Consider theming this too
+    if (type === 'danger') return '#f8d7da';
     return '#e9ecef';
   };
 
