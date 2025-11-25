@@ -14,10 +14,9 @@ import ExerciseLogger from './ExerciseLogger';
 import ExercisePickerModal from './ExercisePickerModal';
 import StyledButton from '../common/StyledButton';
 import StyledTextInput from '../common/StyledTextInput';
+import { saveWorkout } from '@/services/WorkoutService';
+import { generateLocalId } from '@/utils/helpers';
 
-// Helper to generate temporary IDs
-const generateLocalId = () =>
-  `local-${Math.random().toString(36).substring(2, 9)}`;
 const KG_TO_LBS = 2.20462;
 
 const newWorkoutTemplate: LocalWorkout = {
@@ -38,71 +37,13 @@ export default function ActiveWorkout() {
 
   const handleFinishWorkout = async () => {
     // ... (Keep existing save logic unchanged) ...
-    if (!session?.user) {
-      Alert.alert('Error', 'You must be logged in to save a workout.');
-      return;
-    }
-    if (workout.exercises.length === 0) {
-      Alert.alert('Empty Workout', 'Add at least one exercise to save.');
-      return;
-    }
-
+    if (!session?.user) return;
     setIsSaving(true);
+    
     const user = session.user;
 
     try {
-      const { data: workoutData, error: workoutError } = await supabase
-        .from('workouts')
-        .insert({
-          name: workout.name,
-          notes: workout.notes,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (workoutError) throw workoutError;
-      const newWorkoutId = workoutData.id;
-
-      for (const ex of workout.exercises) {
-        const { data: woExerciseData, error: woExerciseError } = await supabase
-          .from('workout_exercises')
-          .insert({
-            user_id: user.id,
-            workout_id: newWorkoutId,
-            exercise_library_id: ex.exercise_library_id,
-            notes: ex.notes,
-          })
-          .select()
-          .single();
-
-        if (woExerciseError) throw woExerciseError;
-        const newWorkoutExerciseId = woExerciseData.id;
-
-        const setsToInsert = ex.sets.map(s => {
-          const rawWeight = Number(s.weight) || 0;
-          const weightInKg =
-            preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
-
-          return {
-            user_id: user.id,
-            workout_exercise_id: newWorkoutExerciseId,
-            reps: Number(s.reps) || 0,
-            weight: weightInKg,
-            set_number: s.set_number,
-          };
-        });
-
-        if (setsToInsert.length > 0) {
-          const { error: setsError } = await supabase
-            .from('sets')
-            .insert(setsToInsert);
-          if (setsError) throw setsError;
-        }
-      }
-
-      Alert.alert('Success!', 'Workout saved.');
-      setWorkout(newWorkoutTemplate);
+      await saveWorkout(workout, user.id, preferredUnit)
     } catch (error) {
       console.error('Error saving workout:', error);
       if (error instanceof Error) {
@@ -170,7 +111,6 @@ export default function ActiveWorkout() {
         value={workout.name}
         onChangeText={text => setWorkout(prev => ({ ...prev, name: text }))}
         placeholder="Workout Name"
-        placeholderTextColor="#888"
       />
       <StyledTextInput
         style={[styles.input, styles.textArea]}
