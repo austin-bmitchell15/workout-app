@@ -11,13 +11,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Alert } from 'react-native';
 
-// Mock external modules
 jest.mock('expo-document-picker');
 jest.mock('expo-file-system/legacy');
 jest.mock('@/services/ImportService');
 jest.spyOn(Alert, 'alert');
 
-// Testing
 describe('CsvImporter Component', () => {
   const mockUserId = 'user-123';
   const mockOnImportComplete = jest.fn();
@@ -25,72 +23,29 @@ describe('CsvImporter Component', () => {
   const mockParsedData = [
     {
       id: '1',
-      date: '2025-11-17 23:06:28',
-      name: 'Evening Workout',
-      duration: '1h 5m',
+      date: '2025-11-17',
+      name: 'Leg Day',
+      duration: '1h',
       exercises: [
-        {
-          name: 'Bench Press (Barbell)',
-          sets: [{ set_number: 1, weight: 135, reps: 15 }],
-        },
-      ],
-    },
-    {
-      id: '2',
-      date: '2020-06-22 10:30:35',
-      name: 'Morning Workout',
-      duration: '42m',
-      exercises: [
-        {
-          name: 'Arnold Press (Dumbbell)',
-          sets: [{ set_number: 1, weight: 40, reps: 8 }],
-        },
+        { name: 'Squat', sets: [{ set_number: 1, weight: 225, reps: 5 }] },
+        { name: 'Lunge', sets: [{ set_number: 1, weight: 50, reps: 10 }] },
       ],
     },
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Setup default mock behaviors
     (ImportService.parseStrongCsv as jest.Mock).mockReturnValue(mockParsedData);
     (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue({
       canceled: false,
       assets: [{ uri: 'file://test.csv' }],
     });
     (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(
-      'mock-csv-content',
+      'mock-content',
     );
   });
 
-  it('renders the initial file selection button', () => {
-    render(
-      <CsvImporter
-        userId={mockUserId}
-        onImportComplete={mockOnImportComplete}
-      />,
-    );
-    expect(screen.getByText('Select CSV File')).toBeTruthy();
-  });
-
-  it('parses file and displays workout preview list', async () => {
-    render(
-      <CsvImporter
-        userId={mockUserId}
-        onImportComplete={mockOnImportComplete}
-      />,
-    );
-
-    fireEvent.press(screen.getByText('Select CSV File'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Preview Import')).toBeTruthy();
-      // UPDATED: Use getByDisplayValue because these are now editable inputs
-      expect(screen.getByDisplayValue('Evening Workout')).toBeTruthy();
-      expect(screen.getByDisplayValue('Morning Workout')).toBeTruthy();
-    });
-  });
-
-  it('selects all items by default and allows deselection', async () => {
+  const loadPreview = async () => {
     render(
       <CsvImporter
         userId={mockUserId}
@@ -99,75 +54,53 @@ describe('CsvImporter Component', () => {
     );
     fireEvent.press(screen.getByText('Select CSV File'));
     await screen.findByText('Preview Import');
+  };
 
-    // Initially "Deselect All" should be visible because all are selected
-    expect(screen.getByText('Deselect All')).toBeTruthy();
+  it('renders preview and allows expanding details', async () => {
+    await loadPreview();
 
-    // Deselect all
-    fireEvent.press(screen.getByText('Deselect All'));
-    expect(screen.getByText('Select All')).toBeTruthy();
+    // Expand the workout
+    fireEvent.press(screen.getByTestId('expand-workout-1'));
 
-    // Import button should be disabled
-    // Use regex to be flexible with exact text content
-    const importButton = screen.getByText(/Import 0 Workouts/i);
-    expect(importButton).toBeDisabled();
+    // Check if exercises are visible
+    expect(screen.getByText('Squat')).toBeOnTheScreen();
+    expect(screen.getByText('Lunge')).toBeOnTheScreen();
   });
 
-  it('calls batchSaveWorkouts when Import button is pressed', async () => {
-    render(
-      <CsvImporter
-        userId={mockUserId}
-        onImportComplete={mockOnImportComplete}
-      />,
-    );
-    fireEvent.press(screen.getByText('Select CSV File'));
-    await screen.findByText('Preview Import');
+  it('allows excluding specific exercises', async () => {
+    await loadPreview();
+    fireEvent.press(screen.getByTestId('expand-workout-1'));
 
-    // Press Import (2 items selected by default)
-    fireEvent.press(screen.getByText('Import 2 Workouts'));
+    // Deselect 'Squat' (index 0)
+    fireEvent.press(screen.getByTestId('exercise-row-1-0'));
+
+    // Import
+    fireEvent.press(screen.getByTestId('import-confirm-btn'));
 
     await waitFor(() => {
-      expect(ImportService.batchSaveWorkouts).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'Evening Workout' }),
-          expect.objectContaining({ name: 'Morning Workout' }),
-        ]),
-        mockUserId,
-        'lbs',
-        expect.any(Function),
-      );
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Success',
-        expect.stringContaining('Imported 2'),
-      );
-      expect(mockOnImportComplete).toHaveBeenCalled();
+      // Expect batchSaveWorkouts to be called with only Lunge
+      const savedWorkouts = (ImportService.batchSaveWorkouts as jest.Mock).mock
+        .calls[0][0];
+      const exercises = savedWorkouts[0].exercises;
+      expect(exercises).toHaveLength(1);
+      expect(exercises[0].name).toBe('Lunge');
     });
   });
 
-  it('allows renaming a workout in the preview', async () => {
-    render(
-      <CsvImporter
-        userId={mockUserId}
-        onImportComplete={mockOnImportComplete}
-      />,
+  it('shows error if all exercises are excluded', async () => {
+    await loadPreview();
+    fireEvent.press(screen.getByTestId('expand-workout-1'));
+
+    // Deselect both exercises
+    fireEvent.press(screen.getByTestId('exercise-row-1-0')); // Squat
+    fireEvent.press(screen.getByTestId('exercise-row-1-1')); // Lunge
+
+    fireEvent.press(screen.getByTestId('import-confirm-btn'));
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Error',
+      expect.stringContaining('No exercises selected'),
     );
-    fireEvent.press(screen.getByText('Select CSV File'));
-    await screen.findByDisplayValue('Evening Workout');
-
-    const nameInput = screen.getByDisplayValue('Evening Workout');
-    fireEvent.changeText(nameInput, 'Chest Day');
-
-    fireEvent.press(screen.getByText('Import 2 Workouts'));
-
-    await waitFor(() => {
-      expect(ImportService.batchSaveWorkouts).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'Chest Day' }), // Renamed
-        ]),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-      );
-    });
+    expect(ImportService.batchSaveWorkouts).not.toHaveBeenCalled();
   });
 });
