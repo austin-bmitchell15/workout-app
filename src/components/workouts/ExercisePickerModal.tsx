@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Modal,
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Modal,
   FlatList,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../services/supabase';
-import { useAuth } from '../../app/_layout';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '@/services/supabase';
 import { ExerciseLibraryItem } from '../types';
-import { FontAwesome } from '@expo/vector-icons';
-import StyledTextInput from '../common/StyledTextInput';
 
 type ExercisePickerModalProps = {
   visible: boolean;
@@ -21,92 +21,119 @@ type ExercisePickerModalProps = {
   onExerciseSelect: (exercise: ExerciseLibraryItem) => void;
 };
 
+// Extended type for internal use
+interface ExerciseItem extends ExerciseLibraryItem {
+  primary_muscle_group?: string;
+}
+
 export default function ExercisePickerModal({
   visible,
   onClose,
   onExerciseSelect,
 }: ExercisePickerModalProps) {
-  const { session } = useAuth();
-  const [exercises, setExercises] = useState<ExerciseLibraryItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [exercises, setExercises] = useState<ExerciseItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (session?.user && visible) {
-      setLoading(true);
-      const fetchExercises = async () => {
-        const { data, error } = await supabase
-          .from('exercise_library')
-          .select('id, name, image_url')
-          .or(`is_public.eq.true,created_by.eq.${session.user.id}`)
-          .ilike('name', `%${searchTerm}%`)
-          .limit(50);
-
-        if (error) {
-          Alert.alert('Error', 'Could not fetch exercises');
-          console.error(error);
-        } else {
-          setExercises(data as ExerciseLibraryItem[]);
-        }
-        setLoading(false);
-      };
-
-      const timer = setTimeout(() => {
-        fetchExercises();
-      }, 300);
-
-      return () => clearTimeout(timer);
+    if (visible) {
+      fetchExercises();
     }
-  }, [searchTerm, session, visible]);
+  }, [visible]);
 
-  const renderItem = ({ item }: { item: ExerciseLibraryItem }) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => onExerciseSelect(item)}>
-      <Text style={styles.itemText}>{item.name}</Text>
-      <FontAwesome name="plus-circle" size={24} color="#007bff" />
-    </TouchableOpacity>
+  const fetchExercises = async () => {
+    setLoading(true);
+    // Fetch muscle group in addition to basic details
+    const { data, error } = await supabase
+      .from('exercise_library')
+      .select('id, name, image_url, primary_muscle_group')
+      .order('name');
+
+    if (error) {
+      console.error(error);
+    } else {
+      setExercises(data || []);
+    }
+    setLoading(false);
+  };
+
+  const filteredExercises = exercises.filter(ex =>
+    ex.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet" // This gives the nice iOS card effect
+      presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Add Exercise</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <FontAwesome name="times" size={20} color="#666" />
+          <TouchableOpacity onPress={onClose}>
+            <Ionicons name="close" size={24} color="#333" />
           </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
-        <StyledTextInput
-          style={styles.searchInput}
-          placeholder="Search exercises..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          autoFocus={false}
-        />
-
-        {/* List */}
-        <View style={styles.listContainer}>
-          {loading ? (
-            <Text style={styles.emptyText}>Loading...</Text>
-          ) : (
-            <FlatList
-              data={exercises}
-              keyExtractor={item => item.id}
-              renderItem={renderItem}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>No exercises found.</Text>
-              }
-            />
-          )}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#888"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search exercises..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            clearButtonMode="while-editing"
+          />
         </View>
+
+        {/* List or Loading */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007bff" />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredExercises}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => onExerciseSelect(item)}>
+                {item.image_url ? (
+                  <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.image}
+                  />
+                ) : (
+                  <View style={[styles.image, styles.placeholderImage]}>
+                    <Ionicons name="barbell-outline" size={24} color="#ccc" />
+                  </View>
+                )}
+
+                <View style={styles.textContainer}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  {item.primary_muscle_group && (
+                    <View style={styles.muscleBadge}>
+                      <Text style={styles.muscleText}>
+                        {item.primary_muscle_group}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <Ionicons name="add-circle-outline" size={24} color="#007bff" />
+              </TouchableOpacity>
+            )}
+          />
+        )}
       </SafeAreaView>
     </Modal>
   );
@@ -115,50 +142,83 @@ export default function ExercisePickerModal({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    backgroundColor: 'white',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
-  closeButton: {
-    padding: 5,
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f0f0f0',
+    margin: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
-    margin: 15,
-    borderWidth: 1,
-  },
-  listContainer: {
     flex: 1,
-  },
-  item: {
-    backgroundColor: 'white',
-    padding: 15,
-    marginVertical: 5,
-    marginHorizontal: 15,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  itemText: {
     fontSize: 16,
+    height: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  image: {
+    width: 50,
+    height: 50,
+    borderRadius: 4,
+    marginRight: 12,
+    backgroundColor: '#eee',
+  },
+  placeholderImage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  itemName: {
+    fontSize: 16,
+    color: '#333',
     fontWeight: '500',
   },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#777',
+  muscleBadge: {
+    backgroundColor: '#eef6ff',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  muscleText: {
+    fontSize: 12,
+    color: '#007bff',
+    fontWeight: '600',
   },
 });

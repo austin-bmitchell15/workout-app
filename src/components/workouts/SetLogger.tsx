@@ -13,7 +13,7 @@ type SetLoggerProps = {
   set: LocalSet;
   onChange: (set: LocalSet) => void;
   onRemove: (localId: string) => void;
-  unitLabel: 'kg' | 'lbs'; // New prop
+  unitLabel: 'kg' | 'lbs';
 };
 
 export default function SetLogger({
@@ -30,7 +30,7 @@ export default function SetLogger({
       <View style={styles.weightCol}>
         <TextInput
           style={styles.input}
-          placeholder={unitLabel} // Use dynamic placeholder
+          placeholder={unitLabel}
           placeholderTextColor="#888"
           keyboardType="numeric"
           value={set.weight}

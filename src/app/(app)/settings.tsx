@@ -1,151 +1,171 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
-  Alert,
+  Switch,
   TouchableOpacity,
-  ActivityIndicator,
+  View,
+  Modal,
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { supabase } from '../../services/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../_layout';
-import StyledButton from '../../components/common/StyledButton';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import CsvImporter from '@/components/settings/CsvImporter';
 
 export default function SettingsScreen() {
-  const { session, profile, setProfile } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { session, signOut } = useAuth();
+  const [isImportModalVisible, setImportModalVisible] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Placeholder for actual theme logic
 
-  const currentUnit = profile?.preferred_unit || 'kg';
-
-  const handleUnitChange = async (newUnit: 'kg' | 'lbs') => {
-    if (!session?.user || !profile) return;
-    if (newUnit === currentUnit) return;
-
-    setLoading(true);
-    const oldProfile = profile;
-    setProfile({ ...profile, preferred_unit: newUnit });
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ preferred_unit: newUnit })
-      .eq('id', session.user.id);
-
-    if (error) {
-      Alert.alert('Error', 'Could not save your preference.');
-      setProfile(oldProfile);
-    }
-    setLoading(false);
-  };
-
-  const handleSignOut = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      Alert.alert('Error', 'Could not sign out.');
-    }
-    setLoading(false);
+  const handleImportComplete = () => {
+    setImportModalVisible(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Settings' }} />
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Units of Measurement</Text>
-        <Text style={styles.cardSubtitle}>
-          Choose your preferred unit for weight.
-        </Text>
-        {loading ? (
-          <ActivityIndicator />
-        ) : (
-          <View style={styles.toggleContainer}>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                currentUnit === 'kg' && styles.toggleActive,
-              ]}
-              onPress={() => handleUnitChange('kg')}>
-              <Text
-                style={[
-                  styles.toggleText,
-                  currentUnit === 'kg' && styles.toggleActiveText,
-                ]}>
-                Kilograms (kg)
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                currentUnit === 'lbs' && styles.toggleActive,
-              ]}
-              onPress={() => handleUnitChange('lbs')}>
-              <Text
-                style={[
-                  styles.toggleText,
-                  currentUnit === 'lbs' && styles.toggleActiveText,
-                ]}>
-                Pounds (lbs)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+    <ThemedView style={styles.container}>
+      {/* Account Section */}
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Account
+        </ThemedText>
+        <View style={styles.row}>
+          <ThemedText>Email</ThemedText>
+          <ThemedText style={styles.value}>{session?.user?.email}</ThemedText>
+        </View>
       </View>
 
-      <StyledButton
-        title="Sign Out"
-        type="danger"
-        onPress={handleSignOut}
-        disabled={loading}
-      />
-    </View>
+      {/* Preferences Section */}
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Preferences
+        </ThemedText>
+        <View style={styles.row}>
+          <ThemedText>Dark Mode</ThemedText>
+          <Switch value={isDarkMode} onValueChange={setIsDarkMode} />
+        </View>
+      </View>
+
+      {/* Data Management Section */}
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Data Management
+        </ThemedText>
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={() => setImportModalVisible(true)}>
+          <View style={styles.actionIconRow}>
+            <Ionicons name="cloud-upload-outline" size={24} color="#007bff" />
+            <ThemedText style={styles.actionLabel}>
+              Import from Strong (CSV)
+            </ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#ccc" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Sign Out */}
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
+          <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Full Screen Import Modal */}
+      <Modal
+        visible={isImportModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setImportModalVisible(false)}>
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <ThemedText type="subtitle">Import Data</ThemedText>
+            <TouchableOpacity onPress={() => setImportModalVisible(false)}>
+              <ThemedText style={styles.closeText}>Close</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {session?.user && (
+            <CsvImporter
+              userId={session.user.id}
+              onImportComplete={handleImportComplete}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 15,
+    padding: 16,
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    borderRadius: 8,
+  section: {
+    marginBottom: 24,
+    backgroundColor: '#fff', // Or use a themed color
+    borderRadius: 12,
+    padding: 16,
+    // Add subtle shadow/border for separation if background is white
     borderWidth: 1,
-    borderColor: '#007bff',
-    overflow: 'hidden',
+    borderColor: '#eee',
   },
-  toggleButton: {
-    flex: 1,
-    padding: 12,
+  sectionTitle: {
+    marginBottom: 12,
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
+    paddingVertical: 8,
   },
-  toggleActive: {
-    backgroundColor: '#007bff',
+  value: {
+    color: '#888',
   },
-  toggleText: {
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  actionIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionLabel: {
     fontSize: 16,
-    color: '#007bff',
+  },
+  signOutButton: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  signOutText: {
+    color: '#dc3545',
     fontWeight: 'bold',
   },
-  toggleActiveText: {
-    color: 'white',
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  closeText: {
+    color: '#007bff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

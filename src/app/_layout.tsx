@@ -6,17 +6,23 @@ import {
   useSegments,
   useRootNavigationState,
 } from 'expo-router';
-import { supabase } from '../services/supabase';
 import { Session } from '@supabase/supabase-js';
 import { View, ActivityIndicator } from 'react-native';
 import { Profile } from '../components/types';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {
+  signOut,
+  getInitialSession,
+  onAuthStateChange,
+  getUserProfile,
+} from '@/services/AuthService';
 
 interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
   setProfile: (profile: Profile | null) => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   setProfile: () => {},
+  signOut: async () => {},
 });
 
 export const useAuth = () => {
@@ -43,59 +50,47 @@ export default function RootLayout() {
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
 
-  useEffect(() => {
-    // Fetch the session on mount
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        if (session) {
-          fetchProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        console.error('Session check failed:', err);
-        setLoading(false); // Ensure we don't get stuck on spinner
-      });
+  // Helper to fetch profile
+  const loadProfile = async (userId: string) => {
+    const { data, error } = await getUserProfile(userId);
+    if (error) {
+      console.error('Error fetching profile:', error);
+    }
+    if (data) {
+      setProfile(data);
+    }
+    setLoading(false);
+  };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
+  useEffect(() => {
+    // 1. Check initial session
+    const initSession = async () => {
+      const initialSession = await getInitialSession();
+      setSession(initialSession);
+      if (initialSession) {
+        await loadProfile(initialSession.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initSession();
+
+    // 2. Listen for auth changes
+    const subscription = onAuthStateChange(async newSession => {
+      setSession(newSession);
+      if (newSession) {
+        await loadProfile(newSession.user.id);
       } else {
         setProfile(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // --- NAVIGATION PROTECTION LOGIC ---
   useEffect(() => {
@@ -115,6 +110,12 @@ export default function RootLayout() {
     }
   }, [session, loading, segments, router, rootNavigationState?.key]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    setSession(null);
+    router.replace('/(auth)/login');
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -126,7 +127,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-        <AuthContext.Provider value={{ session, profile, loading, setProfile }}>
+        <AuthContext.Provider
+          value={{
+            session,
+            profile,
+            loading,
+            setProfile,
+            signOut: handleSignOut,
+          }}>
           <Slot />
         </AuthContext.Provider>
       </BottomSheetModalProvider>

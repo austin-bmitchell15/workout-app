@@ -3,9 +3,10 @@ import { render, fireEvent, screen } from '@testing-library/react-native';
 import ActiveWorkout from '../ActiveWorkout';
 import { useWorkoutForm } from '@/hooks/useWorkoutForm';
 
-// Mock the custom hook
+// Mock the hook
 jest.mock('@/hooks/useWorkoutForm');
 
+// Testing
 describe('ActiveWorkout Component', () => {
   // Default mock values
   const mockHookValues = {

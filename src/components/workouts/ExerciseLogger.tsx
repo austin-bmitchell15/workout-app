@@ -10,7 +10,7 @@ type ExerciseLoggerProps = {
   onChange: (exercise: LocalExercise) => void;
   onRemove: (localId: string) => void;
   generateLocalId: () => string;
-  preferredUnit: 'kg' | 'lbs'; // New prop
+  preferredUnit: 'kg' | 'lbs';
 };
 
 export default function ExerciseLogger({
@@ -18,7 +18,7 @@ export default function ExerciseLogger({
   onChange,
   onRemove,
   generateLocalId,
-  preferredUnit, // Get unit preference
+  preferredUnit,
 }: ExerciseLoggerProps) {
   const handleSetChange = (updatedSet: LocalSet) => {
     const newSets = exercise.sets.map(s =>
@@ -39,7 +39,7 @@ export default function ExerciseLogger({
       weight: '',
       set_number: exercise.sets.length + 1,
     };
-    // Pre-fill with last set's data if available
+
     const lastSet = exercise.sets[exercise.sets.length - 1];
     if (lastSet) {
       newSet.reps = lastSet.reps;

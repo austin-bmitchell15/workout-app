@@ -17,10 +17,10 @@ export default function Auth() {
 
   async function handleSignUp() {
     setLoading(true);
-    const { data, error } = await signUpWithEmail(email, password);
+    const { session, error } = await signUpWithEmail(email, password);
 
     if (error) Alert.alert(error.message);
-    if (!data.session)
+    if (!session)
       Alert.alert('Please check your inbox for email verification!');
     setLoading(false);
   }
