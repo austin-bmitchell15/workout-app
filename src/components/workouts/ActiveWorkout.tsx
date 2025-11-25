@@ -5,6 +5,7 @@ import ExercisePickerModal from './ExercisePickerModal';
 import StyledButton from '../common/StyledButton';
 import { useWorkoutForm } from '@/hooks/useWorkoutForm';
 import StyledTextInput from '../common/StyledTextInput';
+import { ThemedView } from '../themed-view';
 
 export default function ActiveWorkout() {
   const {
@@ -32,7 +33,7 @@ export default function ActiveWorkout() {
   }
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <StyledTextInput
         style={styles.input}
         value={workout.name}
@@ -96,7 +97,7 @@ export default function ActiveWorkout() {
         onClose={() => setPickerVisible(false)}
         onExerciseSelect={addExercise}
       />
-    </View>
+    </ThemedView>
   );
 }
 
