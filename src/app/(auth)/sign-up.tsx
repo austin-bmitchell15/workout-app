@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { Link, router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useThemeColor } from '@/hooks/theme/use-theme-color';
 import { supabase } from '@/services/supabase';
 import StyledTextInput from '@/components/common/StyledTextInput';
 import StyledButton from '@/components/common/StyledButton';
@@ -14,9 +13,6 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const textColor = useThemeColor({}, 'text');
-  const primaryColor = useThemeColor({}, 'tint');
 
   async function handleSignUp() {
     if (password !== confirmPassword) {

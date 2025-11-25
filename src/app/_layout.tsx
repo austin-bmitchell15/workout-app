@@ -113,7 +113,7 @@ export default function RootLayout() {
       // If logged in and stuck in (auth) group, go to app
       router.replace('/(app)');
     }
-  }, [session, loading, segments, rootNavigationState?.key]);
+  }, [session, loading, segments, router, rootNavigationState?.key]);
 
   if (loading) {
     return (

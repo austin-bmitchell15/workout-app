@@ -9,18 +9,19 @@ export default function Auth() {
 
   async function handleSignIn() {
     setLoading(true);
-    const { data, error } = await signInWithEmail(email, password);
-    
+    const { error } = await signInWithEmail(email, password);
+
     if (error) Alert.alert(error.message);
     setLoading(false);
   }
 
   async function handleSignUp() {
     setLoading(true);
-    const {data, error} = await signUpWithEmail(email, password);
+    const { data, error } = await signUpWithEmail(email, password);
 
     if (error) Alert.alert(error.message);
-    if (!data.session) Alert.alert('Please check your inbox for email verification!');
+    if (!data.session)
+      Alert.alert('Please check your inbox for email verification!');
     setLoading(false);
   }
 

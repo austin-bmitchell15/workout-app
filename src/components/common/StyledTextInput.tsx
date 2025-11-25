@@ -2,14 +2,7 @@ import React from 'react';
 import { TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
-interface StyledTextInputProps extends TextInputProps {
-  // Add any custom props here if needed
-}
-
-export default function StyledTextInput({
-  style,
-  ...props
-}: StyledTextInputProps) {
+export default function StyledTextInput({ style, ...props }: TextInputProps) {
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'text');
 

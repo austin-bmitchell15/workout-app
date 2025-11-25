@@ -4,9 +4,9 @@ import { LocalWorkout } from '../components/types';
 const KG_TO_LBS = 2.20462;
 
 export const saveWorkout = async (
-  workout: LocalWorkout, 
-  userId: string, 
-  preferredUnit: 'kg' | 'lbs'
+  workout: LocalWorkout,
+  userId: string,
+  preferredUnit: 'kg' | 'lbs',
 ) => {
   // 1. Create the Workout Record
   const { data: workoutData, error: workoutError } = await supabase
@@ -43,7 +43,8 @@ export const saveWorkout = async (
     const setsToInsert = ex.sets.map(s => {
       const rawWeight = Number(s.weight) || 0;
       // Always store in KG or normalize here
-      const weightInKg = preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
+      const weightInKg =
+        preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
 
       return {
         user_id: userId,

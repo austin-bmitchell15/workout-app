@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "prepare": "husky install",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run format && npm run typecheck",
+    "check": "yarn run lint && yarn run format && yarn run typecheck",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

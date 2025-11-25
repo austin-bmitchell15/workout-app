@@ -45,15 +45,15 @@ export default function LoginScreen() {
         />
       </ThemedView>
 
-      <StyledButton 
-        title={loading ? "Logging in..." : "Login"}
+      <StyledButton
+        title={loading ? 'Logging in...' : 'Login'}
         onPress={handleLogin}
         type="primary"
         isLoading={loading}
       />
 
       <Link href="/sign-up" style={styles.link}>
-        <ThemedText type="link">Don't have an account? Sign up</ThemedText>
+        <ThemedText type="link">Don&apos;t have an account? Sign up</ThemedText>
       </Link>
     </ThemedView>
   );

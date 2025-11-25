@@ -1,4 +1,4 @@
-export const generateLocalId = () => 
+export const generateLocalId = () =>
   `local-${Math.random().toString(36).substring(2, 9)}`;
 
 export const kgToLbs = (kg: number) => kg * 2.20462;
