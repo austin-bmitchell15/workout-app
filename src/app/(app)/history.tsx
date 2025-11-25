@@ -1,135 +1,97 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
   FlatList,
+  View,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
-  Alert,
 } from 'react-native';
-import { supabase } from '../../services/supabase';
 import { useAuth } from '../_layout';
-import { WorkoutRecord } from '../../components/types';
-import { Stack, useFocusEffect } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { getWorkoutHistory } from '@/services/WorkoutService';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import WorkoutHistoryCard from '@/components/workouts/WorkoutHistoryCard';
+import { useFocusEffect } from 'expo-router';
 
 export default function HistoryScreen() {
   const { session } = useAuth();
-  const [workouts, setWorkouts] = useState<WorkoutRecord[]>([]);
+  const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchWorkouts = useCallback(async () => {
+  const fetchHistory = useCallback(async () => {
     if (!session?.user) return;
-
     try {
-      const { data, error } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await getWorkoutHistory(session.user.id);
       setWorkouts(data || []);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', `Could not fetch workouts: ${error.message}`);
-      }
+      console.error('Failed to fetch history:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [session]);
+  }, [session?.user]);
 
+  // Refresh when the screen comes into focus (e.g., after logging a workout)
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchWorkouts();
-    }, [fetchWorkouts]),
+      fetchHistory();
+    }, [fetchHistory]),
   );
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchWorkouts();
+    fetchHistory();
   };
 
-  const renderItem = ({ item }: { item: WorkoutRecord }) => (
-    <TouchableOpacity style={styles.itemContainer}>
-      <View>
-        <Text style={styles.itemTitle}>{item.name}</Text>
-        <Text style={styles.itemDate}>
-          {new Date(item.created_at).toLocaleDateString()}
-        </Text>
-      </View>
-      <FontAwesome name="chevron-right" size={16} color="#ccc" />
-    </TouchableOpacity>
-  );
-
-  if (loading) {
+  if (loading && workouts.length === 0) {
     return (
-      <View style={styles.centered}>
+      <ThemedView style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" />
-      </View>
+      </ThemedView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Workout History' }} />
+    <ThemedView style={styles.container}>
       <FlatList
         data={workouts}
-        renderItem={renderItem}
         keyExtractor={item => item.id}
+        renderItem={({ item }) => <WorkoutHistoryCard workout={item} />}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>No workouts saved yet.</Text>
+          <View style={styles.center}>
+            <ThemedText>No workouts found.</ThemedText>
+            <ThemedText style={styles.subText}>
+              Go to the &quot;Log&quot; tab to track your first workout!
+            </ThemedText>
           </View>
         }
       />
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
-  centered: {
+  listContent: {
+    padding: 16,
+  },
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  itemContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 15,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderColor: '#eee',
-    borderWidth: 1,
-  },
-  itemTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  itemDate: {
+  subText: {
     fontSize: 14,
-    color: '#777',
-    marginTop: 4,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#777',
+    color: '#666',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
