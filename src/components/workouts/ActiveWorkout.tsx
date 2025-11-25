@@ -13,6 +13,7 @@ import { LocalWorkout, LocalExercise } from '../types';
 import ExerciseLogger from './ExerciseLogger';
 import ExercisePickerModal from './ExercisePickerModal';
 import StyledButton from '../common/StyledButton';
+import StyledTextInput from '../common/StyledTextInput';
 
 // Helper to generate temporary IDs
 const generateLocalId = () =>
@@ -164,19 +165,18 @@ export default function ActiveWorkout() {
 
   return (
     <View style={styles.container}>
-      <TextInput
+      <StyledTextInput
         style={styles.input}
         value={workout.name}
         onChangeText={text => setWorkout(prev => ({ ...prev, name: text }))}
         placeholder="Workout Name"
         placeholderTextColor="#888"
       />
-      <TextInput
+      <StyledTextInput
         style={[styles.input, styles.textArea]}
         value={workout.notes}
         onChangeText={text => setWorkout(prev => ({ ...prev, notes: text }))}
         placeholder="Workout Notes"
-        placeholderTextColor="#888"
         multiline
       />
 
@@ -240,15 +240,8 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
     marginBottom: 15,
-    paddingHorizontal: 15,
-    borderRadius: 8,
     backgroundColor: 'white',
-    fontSize: 16,
-    color: '#000',
   },
   textArea: {
     height: 80,
