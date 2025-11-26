@@ -2,72 +2,60 @@ import { supabase } from './supabase';
 import { FullWorkoutSubmission } from '@/types/types';
 
 export const saveWorkout = async (submission: FullWorkoutSubmission) => {
-  // 1. Create Workout
-  const { data: workoutData, error: workoutError } = await supabase
-    .from('workouts')
-    .insert(submission.workout)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase.rpc('save_full_workout', {
+      workout_data: submission.workout as any,
+      exercises_data: submission.exercises as any,
+    });
 
-  if (workoutError) throw workoutError;
-
-  // 2. Process Exercises
-  for (const ex of submission.exercises) {
-    const { data: woExerciseData, error: woExerciseError } = await supabase
-      .from('workout_exercises')
-      .insert({ ...ex.data, workout_id: workoutData.id })
-      .select()
-      .single();
-
-    if (woExerciseError) throw woExerciseError;
-
-    // 3. Process Sets
-    // NO LOGIC HERE: Just map the IDs and insert.
-    const setsToInsert = ex.sets.map(s => ({
-      ...s,
-      workout_exercises_id: woExerciseData.id,
-      // We assume s.weight and s.reps are already numbers/converted
-    }));
-
-    if (setsToInsert.length > 0) {
-      const { error: setsError } = await supabase
-        .from('sets')
-        .insert(setsToInsert);
-      if (setsError) throw setsError;
+    if (error) {
+      console.error('Error in save_full_workout RPC:', error);
+      return { data: null, error };
     }
-  }
 
-  return workoutData;
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 };
 
 export const getWorkoutHistory = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('workouts')
-    .select(
-      `
-      id,
-      name,
-      notes,
-      created_at,
-      workout_exercises (
+  try {
+    const { data, error } = await supabase
+      .from('workouts')
+      .select(
+        `
         id,
+        name,
         notes,
-        exercise_library (
-          name,
-          image_url
-        ),
-        sets (
+        created_at,
+        workout_exercises (
           id,
-          reps,
-          weight,
-          set_number
+          notes,
+          exercise_library (
+            id,
+            name,
+            image_url
+          ),
+          sets (
+            id,
+            reps,
+            weight,
+            set_number
+          )
         )
+      `,
       )
-    `,
-    )
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      console.error('Error fetching history:', error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 };

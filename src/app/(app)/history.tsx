@@ -12,24 +12,21 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import WorkoutHistoryCard from '@/components/workouts/WorkoutHistoryCard';
 import { useFocusEffect } from 'expo-router';
+import { FullWorkoutHistory } from '@/types/types';
 
 export default function HistoryScreen() {
   const { session } = useAuth();
-  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<FullWorkoutHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchHistory = useCallback(async () => {
     if (!session?.user) return;
-    try {
-      const data = await getWorkoutHistory(session.user.id);
-      setWorkouts(data || []);
-    } catch (error) {
-      console.error('Failed to fetch history:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    const { data, error } = await getWorkoutHistory(session.user.id);
+    if (error) console.error(error);
+    setWorkouts(data || []);
+    setLoading(false);
+    setRefreshing(false);
   }, [session?.user]);
 
   // Refresh when the screen comes into focus (e.g., after logging a workout)
