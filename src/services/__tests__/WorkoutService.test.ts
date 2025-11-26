@@ -3,9 +3,11 @@ import { saveWorkout, getWorkoutHistory } from '../WorkoutService';
 import { supabase } from '../supabase';
 
 // Mock the entire supabase client structure
+// Added 'rpc' to the mock since we now use it for saving
 jest.mock('../supabase', () => ({
   supabase: {
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
@@ -15,6 +17,7 @@ describe('WorkoutService', () => {
     workout: {
       name: 'Leg Day',
       notes: 'Focus on form',
+      user_id: mockUserId, // Added to match type if strict
     },
     exercises: [
       {
@@ -32,70 +35,40 @@ describe('WorkoutService', () => {
     jest.clearAllMocks();
   });
 
-  it('should save a workout and exercises successfully', async () => {
-    // Chain mocks: .from().insert().select().single()
-    const mockSingle = jest.fn();
-    const mockSelect = jest.fn(() => ({ single: mockSingle }));
-    const mockInsert = jest.fn(() => ({ select: mockSelect }));
+  describe('saveWorkout', () => {
+    it('should call the save_full_workout RPC and return data', async () => {
+      // 1. Mock RPC success response
+      const mockResponse = { id: 'new-workout-id' };
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: mockResponse,
+        error: null,
+      });
 
-    // Default implementation for tables
-    (supabase.from as jest.Mock).mockReturnValue({
-      insert: mockInsert,
+      // 2. Act
+      const result = await saveWorkout(mockWorkout);
+
+      // 3. Assert
+      expect(supabase.rpc).toHaveBeenCalledWith('save_full_workout', {
+        workout_data: mockWorkout.workout,
+        exercises_data: mockWorkout.exercises,
+      });
+      expect(result).toEqual({ data: mockResponse, error: null });
     });
 
-    // 1. Workout Response
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'new-workout-1' },
-      error: null,
-    });
+    it('should return an error object if RPC fails', async () => {
+      // 1. Mock RPC failure
+      const mockError = { message: 'DB Error' };
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: null,
+        error: mockError,
+      });
 
-    // 2. Workout Exercise Response
-    mockSingle.mockResolvedValueOnce({
-      data: { id: 'new-wo-exercise-1' },
-      error: null,
-    });
+      // 2. Act
+      const result = await saveWorkout(mockWorkout);
 
-    // 3. Sets Response
-    const mockSetsInsert = jest.fn().mockResolvedValue({ error: null });
-
-    // Override mock for 'sets' table
-    (supabase.from as jest.Mock).mockImplementation((table: string) => {
-      if (table === 'sets') {
-        return { insert: mockSetsInsert };
-      }
-      return { insert: mockInsert };
-    });
-
-    // Act
-    await saveWorkout(mockWorkout);
-
-    // Assert
-    expect(supabase.from).toHaveBeenCalledWith('workouts');
-    expect(supabase.from).toHaveBeenCalledWith('workout_exercises');
-
-    // Check Sets Insert
-    expect(supabase.from).toHaveBeenCalledWith('sets');
-    expect(mockSetsInsert).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          workout_exercises_id: 'new-wo-exercise-1', // Plural column name
-          weight: 225,
-        }),
-      ]),
-    );
-  });
-
-  it('should throw an error if workout creation fails', async () => {
-    const mockSingle = jest
-      .fn()
-      .mockResolvedValue({ data: null, error: { message: 'DB Error' } });
-    const mockInsert = jest.fn(() => ({
-      select: jest.fn(() => ({ single: mockSingle })),
-    }));
-    (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
-
-    await expect(saveWorkout(mockWorkout)).rejects.toMatchObject({
-      message: 'DB Error',
+      // 3. Assert: It should NOT throw, but return the error
+      expect(result.error).toEqual(mockError);
+      expect(result.data).toBeNull();
     });
   });
 
@@ -103,6 +76,7 @@ describe('WorkoutService', () => {
     it('should fetch history ordered by date', async () => {
       const mockData = [{ id: '1', name: 'Morning Lift' }];
 
+      // Chain mocks for .from().select().eq().order()
       const mockOrder = jest
         .fn()
         .mockResolvedValue({ data: mockData, error: null });
@@ -113,28 +87,38 @@ describe('WorkoutService', () => {
         select: mockSelect,
       });
 
+      // Act
       const result = await getWorkoutHistory(mockUserId);
 
+      // Assert
       expect(supabase.from).toHaveBeenCalledWith('workouts');
       expect(mockSelect).toHaveBeenCalledWith(
         expect.stringContaining('workout_exercises'),
       );
       expect(mockEq).toHaveBeenCalledWith('user_id', mockUserId);
-      expect(result).toEqual(mockData);
+
+      // New check: expecting { data, error } structure
+      expect(result.data).toEqual(mockData);
+      expect(result.error).toBeNull();
     });
 
-    it('should throw error if fetch fails', async () => {
+    it('should return error object if fetch fails', async () => {
+      const mockError = { message: 'Fetch Error' };
+
       const mockOrder = jest
         .fn()
-        .mockResolvedValue({ data: null, error: { message: 'Fetch Error' } });
+        .mockResolvedValue({ data: null, error: mockError });
       const mockEq = jest.fn(() => ({ order: mockOrder }));
       const mockSelect = jest.fn(() => ({ eq: mockEq }));
 
       (supabase.from as jest.Mock).mockReturnValue({ select: mockSelect });
 
-      await expect(getWorkoutHistory(mockUserId)).rejects.toMatchObject({
-        message: 'Fetch Error',
-      });
+      // Act
+      const result = await getWorkoutHistory(mockUserId);
+
+      // Assert: Should not throw
+      expect(result.data).toBeNull();
+      expect(result.error).toEqual(mockError);
     });
   });
 });

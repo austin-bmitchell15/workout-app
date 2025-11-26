@@ -85,9 +85,10 @@ describe('useWorkoutForm', () => {
 
   it('should call saveService when finishing workout', async () => {
     const { result } = renderHook(() => useWorkoutForm());
+    // UPDATED: Mock resolved value with correct structure
     const saveSpy = jest
       .spyOn(WorkoutService, 'saveWorkout')
-      .mockResolvedValue({} as any);
+      .mockResolvedValue({ data: { id: '123' }, error: null } as any);
 
     act(() => {
       result.current.addExercise({
@@ -109,9 +110,11 @@ describe('useWorkoutForm', () => {
 
   it('should handle errors during saving', async () => {
     const { result } = renderHook(() => useWorkoutForm());
+
+    // UPDATED: Service no longer rejects/throws. It returns { error }.
     jest
       .spyOn(WorkoutService, 'saveWorkout')
-      .mockRejectedValue(new Error('Network Fail'));
+      .mockResolvedValue({ data: null, error: new Error('Network Fail') });
 
     act(() => {
       result.current.addExercise({

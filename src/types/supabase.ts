@@ -210,7 +210,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      save_full_workout: {
+        Args: { exercises_data: Json; workout_data: Json };
+        Returns: Json;
+      };
     };
     Enums: {
       UNIT_TYPE: 'KG' | 'LB';

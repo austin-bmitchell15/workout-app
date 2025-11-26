@@ -2,8 +2,16 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import ExerciseLogger from '../ExerciseLogger';
 import { LocalExercise } from '@/types/types';
+import { generateLocalId } from '@/utils/helpers';
 
-// Mock theme hook to return simple colors for testing
+// 1. Mock the module completely
+jest.mock('@/utils/helpers', () => ({
+  generateLocalId: jest.fn(),
+  // We don't need to mock lbsToKg/kgToLbs here as they aren't used in this component,
+  // but if they were, we would add them here.
+}));
+
+// Mock theme hook
 jest.mock('@/hooks/theme/use-theme-color', () => ({
   useThemeColor: () => '#000',
 }));
@@ -23,35 +31,31 @@ describe('ExerciseLogger', () => {
 
   const mockOnChange = jest.fn();
   const mockOnRemove = jest.fn();
-  const mockGenerateId = jest.fn(() => 'new-id');
 
   const defaultProps = {
     exercise: mockExercise,
     onChange: mockOnChange,
     onRemove: mockOnRemove,
-    generateLocalId: mockGenerateId,
     preferredUnit: 'KG' as const,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // 2. Set the return value for the mock
+    (generateLocalId as jest.Mock).mockReturnValue('new-id');
   });
 
   it('renders exercise name and sets', () => {
     render(<ExerciseLogger {...defaultProps} />);
     expect(screen.getByText('Squat')).toBeTruthy();
     expect(screen.getByDisplayValue('Keep back straight')).toBeTruthy();
-    // Use testIDs or text finding for numbers
     expect(screen.getByText('1')).toBeTruthy();
     expect(screen.getByText('2')).toBeTruthy();
   });
 
   it('calls onRemove when trash icon is pressed', () => {
     render(<ExerciseLogger {...defaultProps} />);
-
-    // Now we can target the button reliably
     fireEvent.press(screen.getByTestId('remove-exercise-btn'));
-
     expect(mockOnRemove).toHaveBeenCalledWith('ex-1');
   });
 
@@ -68,14 +72,15 @@ describe('ExerciseLogger', () => {
   it('adds a new set when Add Set is pressed', () => {
     render(<ExerciseLogger {...defaultProps} />);
 
-    // Robust selection using testID
     fireEvent.press(screen.getByTestId('add-set-btn'));
 
-    expect(mockGenerateId).toHaveBeenCalled();
+    // 3. Assert on the imported mock
+    expect(generateLocalId).toHaveBeenCalled();
+
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
         sets: expect.arrayContaining([
-          expect.objectContaining({ set_number: 3 }),
+          expect.objectContaining({ set_number: 3, local_id: 'new-id' }),
         ]),
       }),
     );
@@ -83,9 +88,7 @@ describe('ExerciseLogger', () => {
 
   it('updates a set when modified', () => {
     render(<ExerciseLogger {...defaultProps} />);
-
     const weightInput = screen.getByTestId('set-weight-s-1');
-
     fireEvent.changeText(weightInput, '105');
 
     const calledArg = mockOnChange.mock.calls[0][0];

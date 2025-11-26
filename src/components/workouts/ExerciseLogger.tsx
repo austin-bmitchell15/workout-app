@@ -7,12 +7,12 @@ import StyledTextInput from '@/components/common/StyledTextInput';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
+import { generateLocalId } from '@/utils/helpers';
 
 type ExerciseLoggerProps = {
   exercise: LocalExercise;
   onChange: (exercise: LocalExercise) => void;
   onRemove: (localId: string) => void;
-  generateLocalId: () => string;
   preferredUnit: WeightEnums;
 };
 
@@ -20,7 +20,6 @@ export default function ExerciseLogger({
   exercise,
   onChange,
   onRemove,
-  generateLocalId,
   preferredUnit,
 }: ExerciseLoggerProps) {
   const borderColor = useThemeColor({}, 'border');
@@ -76,7 +75,6 @@ export default function ExerciseLogger({
         multiline
       />
 
-      {/* Set Headers */}
       <View style={styles.setRow}>
         <ThemedText style={[styles.setHeader, styles.setCol]}>Set</ThemedText>
         <ThemedText style={[styles.setHeader, styles.weightCol]}>
@@ -86,7 +84,6 @@ export default function ExerciseLogger({
         <View style={styles.removeCol} />
       </View>
 
-      {/* Sets List */}
       {exercise.sets.map(set => (
         <SetLogger
           key={set.local_id}
@@ -123,9 +120,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   notesInput: {
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 14,
     marginBottom: 15,
     height: 40,
   },
@@ -138,21 +132,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     opacity: 0.7,
   },
-  setCol: {
-    flex: 1.5,
-    textAlign: 'center',
-  },
-  weightCol: {
-    flex: 2,
-    textAlign: 'center',
-  },
-  repsCol: {
-    flex: 2,
-    textAlign: 'center',
-  },
-  removeCol: {
-    flex: 1,
-  },
+  setCol: { flex: 1.5, textAlign: 'center' },
+  weightCol: { flex: 2, textAlign: 'center' },
+  repsCol: { flex: 2, textAlign: 'center' },
+  removeCol: { flex: 1 },
   addSetButton: {
     padding: 10,
     borderRadius: 5,

@@ -122,19 +122,22 @@ export function useWorkoutForm() {
     }
 
     setIsSaving(true);
-    try {
-      const submission = prepareSubmission(workout, session.user.id);
-      await saveWorkout(submission);
-      Alert.alert('Success!', 'Workout saved.');
-      resetWorkout();
-    } catch (error) {
+
+    // UPDATED ERROR HANDLING LOGIC
+    const submission = prepareSubmission(workout, session.user.id);
+    const { error } = await saveWorkout(submission);
+
+    setIsSaving(false);
+
+    if (error) {
       console.error('Error saving workout:', error);
-      if (error instanceof Error) {
-        Alert.alert('Error', `Failed to save workout: ${error.message}`);
-      }
-    } finally {
-      setIsSaving(false);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Error', `Failed to save workout: ${msg}`);
+      return;
     }
+
+    Alert.alert('Success!', 'Workout saved.');
+    resetWorkout();
   };
 
   return {

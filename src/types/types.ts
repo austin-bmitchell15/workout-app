@@ -38,6 +38,7 @@ export interface LocalWorkout {
 export type Profile = Tables<'profiles'>;
 export type WorkoutRecord = Tables<'workouts'>;
 export type ExerciseRecord = Tables<'workout_exercises'>;
+export type SetRecord = Tables<'sets'>;
 export type WeightEnums = Enums<'UNIT_TYPE'> | null;
 
 export type ExerciseLibrary = Awaited<
@@ -73,10 +74,15 @@ export interface FullWorkoutSubmission {
   exercises: ExerciseSubmission[];
 }
 
-export type FullWorkoutHistory = WorkoutRecord & {
-  workout_exercises: ExerciseRecord &
-    {
-      exercise: Pick<Tables<'exercise_library'>, 'name' | 'image_url'> | null;
-      sets: Tables<'sets'>[];
-    }[];
+export type FullWorkoutHistory = Omit<WorkoutRecord, 'user_id'> & {
+  workout_exercises: (Omit<
+    ExerciseRecord,
+    'user_id' | 'exercise_library_id' | 'workout_id'
+  > & {
+    exercise_library: Pick<
+      Tables<'exercise_library'>,
+      'name' | 'image_url'
+    > | null;
+    sets: Omit<SetRecord, 'user_id' | 'workout_exercises_id'>[];
+  })[];
 };
