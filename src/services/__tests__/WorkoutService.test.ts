@@ -1,3 +1,4 @@
+import { FullWorkoutSubmission } from '@/types/types';
 import { saveWorkout, getWorkoutHistory } from '../WorkoutService';
 import { supabase } from '../supabase';
 
@@ -10,17 +11,19 @@ jest.mock('../supabase', () => ({
 
 describe('WorkoutService', () => {
   const mockUserId = 'test-user-id';
-  const mockWorkout = {
-    name: 'Leg Day',
-    notes: 'Focus on form',
+  const mockWorkout: FullWorkoutSubmission = {
+    workout: {
+      name: 'Leg Day',
+      notes: 'Focus on form',
+    },
     exercises: [
       {
-        local_id: 'local-1',
-        exercise_library_id: 'ex-123',
-        name: 'Squat',
-        image_url: 'http://example.com/squat.png',
-        notes: 'Go deep',
-        sets: [{ local_id: 's-1', reps: '5', weight: '225', set_number: 1 }],
+        data: {
+          exercise_library_id: 'ex-123',
+          user_id: mockUserId,
+          notes: 'Go deep',
+        },
+        sets: [{ user_id: mockUserId, reps: 5, weight: 225, set_number: 1 }],
       },
     ],
   };
@@ -64,7 +67,7 @@ describe('WorkoutService', () => {
     });
 
     // Act
-    await saveWorkout(mockWorkout, mockUserId, 'kg');
+    await saveWorkout(mockWorkout);
 
     // Assert
     expect(supabase.from).toHaveBeenCalledWith('workouts');
@@ -82,27 +85,6 @@ describe('WorkoutService', () => {
     );
   });
 
-  it('should convert weight from lbs to kg correctly', async () => {
-    const mockSingle = jest
-      .fn()
-      .mockResolvedValue({ data: { id: 'id' }, error: null });
-    const mockInsert = jest.fn(() => ({
-      select: jest.fn(() => ({ single: mockSingle })),
-    }));
-    const mockSetsInsert = jest.fn().mockResolvedValue({ error: null });
-
-    (supabase.from as jest.Mock).mockImplementation(table =>
-      table === 'sets' ? { insert: mockSetsInsert } : { insert: mockInsert },
-    );
-
-    await saveWorkout(mockWorkout, mockUserId, 'lbs');
-
-    const insertedSets = mockSetsInsert.mock.calls[0][0];
-    const weight = insertedSets[0].weight;
-
-    expect(weight).toBeCloseTo(102.058, 3);
-  });
-
   it('should throw an error if workout creation fails', async () => {
     const mockSingle = jest
       .fn()
@@ -112,9 +94,9 @@ describe('WorkoutService', () => {
     }));
     (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
 
-    await expect(
-      saveWorkout(mockWorkout, mockUserId, 'kg'),
-    ).rejects.toMatchObject({ message: 'DB Error' });
+    await expect(saveWorkout(mockWorkout)).rejects.toMatchObject({
+      message: 'DB Error',
+    });
   });
 
   describe('getWorkoutHistory', () => {

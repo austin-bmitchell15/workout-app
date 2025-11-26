@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { LocalSet } from '../types';
+import { LocalSet, WeightEnums } from '@/types/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '../themed-text';
 import StyledTextInput from '../common/StyledTextInput';
@@ -10,7 +10,7 @@ type SetLoggerProps = {
   set: LocalSet;
   onChange: (set: LocalSet) => void;
   onRemove: (localId: string) => void;
-  unitLabel: 'kg' | 'lbs';
+  unitLabel: WeightEnums;
 };
 
 export default function SetLogger({
@@ -29,7 +29,7 @@ export default function SetLogger({
       <View style={styles.weightCol}>
         <StyledTextInput
           style={styles.input}
-          placeholder={unitLabel}
+          placeholder={unitLabel?.toString()}
           keyboardType="numeric"
           value={set.weight}
           onChangeText={text => onChange({ ...set, weight: text })}

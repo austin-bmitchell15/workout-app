@@ -34,7 +34,12 @@ describe('useWorkoutForm', () => {
 
     // Add
     act(() => {
-      result.current.addExercise({ id: 'ex-1', name: 'Bench Press' });
+      result.current.addExercise({
+        id: 'ex-1',
+        name: 'Bench Press',
+        image_url: null,
+        primary_muscle_group: 'Chest',
+      });
     });
     expect(result.current.workout.exercises).toHaveLength(1);
     const exerciseId = result.current.workout.exercises[0].local_id;
@@ -85,7 +90,12 @@ describe('useWorkoutForm', () => {
       .mockResolvedValue({} as any);
 
     act(() => {
-      result.current.addExercise({ id: 'ex-1', name: 'Pushups' });
+      result.current.addExercise({
+        id: 'ex-1',
+        name: 'Pushups',
+        image_url: null,
+        primary_muscle_group: 'Chest',
+      });
     });
 
     await act(async () => {
@@ -104,7 +114,12 @@ describe('useWorkoutForm', () => {
       .mockRejectedValue(new Error('Network Fail'));
 
     act(() => {
-      result.current.addExercise({ id: 'ex-1', name: 'Pushups' });
+      result.current.addExercise({
+        id: 'ex-1',
+        name: 'Pushups',
+        image_url: null,
+        primary_muscle_group: 'Chest',
+      });
     });
 
     await act(async () => {

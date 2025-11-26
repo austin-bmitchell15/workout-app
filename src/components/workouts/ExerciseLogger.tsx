@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { LocalExercise, LocalSet } from '../types';
+import { LocalExercise, LocalSet, WeightEnums } from '@/types/types';
 import { FontAwesome } from '@expo/vector-icons';
 import SetLogger from './SetLogger';
-import StyledTextInput from '../common/StyledTextInput';
-import { ThemedView } from '../themed-view';
-import { ThemedText } from '../themed-text';
+import StyledTextInput from '@/components/common/StyledTextInput';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 type ExerciseLoggerProps = {
@@ -13,7 +13,7 @@ type ExerciseLoggerProps = {
   onChange: (exercise: LocalExercise) => void;
   onRemove: (localId: string) => void;
   generateLocalId: () => string;
-  preferredUnit: 'kg' | 'lbs';
+  preferredUnit: WeightEnums;
 };
 
 export default function ExerciseLogger({
