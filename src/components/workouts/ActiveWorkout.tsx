@@ -15,6 +15,7 @@ import { useWorkoutForm } from '@/hooks/useWorkoutForm';
 import StyledTextInput from '@/components/common/StyledTextInput';
 import { ThemedView } from '@/components/themed-view';
 import { LocalExercise } from '@/types/types';
+import { WorkoutHeader } from './WorkoutHeader';
 
 export default function ActiveWorkout() {
   const {
@@ -42,25 +43,6 @@ export default function ActiveWorkout() {
       />
     ),
     [updateExercise, removeExercise, preferredUnit],
-  );
-
-  // 2. Header Component (Workout Details)
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <StyledTextInput
-        style={styles.input}
-        value={workout.name}
-        onChangeText={text => updateWorkoutField('name', text)}
-        placeholder="Workout Name"
-      />
-      <StyledTextInput
-        style={[styles.input, styles.textArea]}
-        value={workout.notes}
-        onChangeText={text => updateWorkoutField('notes', text)}
-        placeholder="Workout Notes"
-        multiline
-      />
-    </View>
   );
 
   // 3. Footer Component (Action Buttons)
@@ -114,7 +96,14 @@ export default function ActiveWorkout() {
         data={workout.exercises}
         renderItem={renderExercise}
         keyExtractor={item => item.local_id}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <WorkoutHeader
+            name={workout.name}
+            notes={workout.notes}
+            onNameChange={t => updateWorkoutField('name', t)}
+            onNotesChange={t => updateWorkoutField('notes', t)}
+          />
+        }
         ListFooterComponent={renderFooter}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"

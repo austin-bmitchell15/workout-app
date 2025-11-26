@@ -8,6 +8,7 @@ import {
 } from '@/types/types';
 import { useAuth } from '@/app/_layout';
 import { saveWorkout } from '@/services/WorkoutService';
+import { transformWorkoutForSubmission } from './utils/transformers';
 
 // Helper for ID generation
 const generateLocalId = () =>
@@ -72,45 +73,6 @@ export function useWorkoutForm() {
     setWorkout(newWorkoutTemplate);
   };
 
-  const prepareSubmission = (
-    currentWorkout: LocalWorkout,
-    userId: string,
-  ): FullWorkoutSubmission => {
-    // Transform UI Exercises -> Supabase Exercises
-    const strictExercises = currentWorkout.exercises.map(ex => {
-      // Transform UI Sets -> Supabase Sets
-      const strictSets = ex.sets.map(s => ({
-        set_number: s.set_number,
-        reps: Number(s.reps) || 0,
-        weight:
-          preferredUnit === 'LB'
-            ? (Number(s.weight) || 0) / 2.20462
-            : Number(s.weight) || 0,
-        user_id: userId,
-        // workout_exercises_id is added in the service layer
-      }));
-
-      return {
-        data: {
-          exercise_library_id: ex.exercise_library_id,
-          notes: ex.notes,
-          user_id: userId,
-          // workout_id is added in the service layer
-        },
-        sets: strictSets,
-      };
-    });
-
-    return {
-      workout: {
-        name: currentWorkout.name || 'Untitled Workout',
-        notes: currentWorkout.notes,
-        user_id: userId,
-      },
-      exercises: strictExercises,
-    };
-  };
-
   const finishWorkout = async () => {
     if (!session?.user) {
       Alert.alert('Error', 'You must be logged in to save a workout.');
@@ -123,8 +85,11 @@ export function useWorkoutForm() {
 
     setIsSaving(true);
 
-    // UPDATED ERROR HANDLING LOGIC
-    const submission = prepareSubmission(workout, session.user.id);
+    const submission = transformWorkoutForSubmission(
+      workout,
+      session.user.id,
+      preferredUnit,
+    );
     const { error } = await saveWorkout(submission);
 
     setIsSaving(false);
