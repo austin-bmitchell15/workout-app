@@ -1,12 +1,11 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import ActiveWorkout from '../ActiveWorkout';
 import { useWorkoutForm } from '@/hooks/useWorkoutForm';
 
-// Mock the hook
 jest.mock('@/hooks/useWorkoutForm');
 
-// Testing
 describe('ActiveWorkout Component', () => {
   // Default mock values
   const mockHookValues = {
@@ -25,16 +24,18 @@ describe('ActiveWorkout Component', () => {
     updateExercise: jest.fn(),
     finishWorkout: jest.fn(),
     resetWorkout: jest.fn(),
-    generateLocalId: jest.fn(),
+    // generateLocalId is removed as it's no longer returned by the hook
   };
 
   beforeEach(() => {
     (useWorkoutForm as jest.Mock).mockReturnValue(mockHookValues);
     jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert'); // Spy on the Alert module
   });
 
-  it('renders the workout name input', () => {
+  it('renders the workout name input (via Header component)', () => {
     render(<ActiveWorkout />);
+    // Even though it's in a sub-component, testing-library finds it
     expect(screen.getByPlaceholderText('Workout Name')).toBeTruthy();
     expect(screen.getByDisplayValue('Test Workout')).toBeTruthy();
   });
@@ -79,7 +80,7 @@ describe('ActiveWorkout Component', () => {
     render(<ActiveWorkout />);
 
     expect(screen.getByText('Saving Workout...')).toBeTruthy();
-    expect(screen.queryByPlaceholderText('Workout Name')).toBeNull(); // Inputs should be hidden
+    expect(screen.queryByPlaceholderText('Workout Name')).toBeNull();
   });
 
   it('renders exercises list', () => {
@@ -102,5 +103,19 @@ describe('ActiveWorkout Component', () => {
 
     render(<ActiveWorkout />);
     expect(screen.getByText('Bench Press')).toBeTruthy();
+  });
+
+  it('shows confirmation alert when Cancel is pressed', () => {
+    render(<ActiveWorkout />);
+    const cancelButton = screen.getByText('Cancel Workout');
+
+    fireEvent.press(cancelButton);
+
+    // Verify the "Smart" component logic triggered the alert
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Cancel Workout?',
+      expect.stringContaining('discard this workout'),
+      expect.any(Array),
+    );
   });
 });
