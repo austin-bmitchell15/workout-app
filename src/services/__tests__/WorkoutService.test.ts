@@ -1,4 +1,4 @@
-import { FullWorkoutSubmission } from '@/types/types';
+import { FullWorkoutSubmission } from '@/types/api';
 import { saveWorkout, getWorkoutHistory } from '../WorkoutService';
 import { supabase } from '../supabase';
 

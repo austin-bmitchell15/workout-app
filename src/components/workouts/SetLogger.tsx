@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { LocalSet, WeightEnums } from '@/types/types';
+import { LocalSet } from '@/types/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '../themed-text';
 import StyledTextInput from '../common/StyledTextInput';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
+import { WeightEnums } from '@/types/schema';
 
 type SetLoggerProps = {
   set: LocalSet;

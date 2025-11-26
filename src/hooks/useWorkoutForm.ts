@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import {
-  LocalWorkout,
-  LocalExercise,
-  FullWorkoutSubmission,
-  ExerciseLibraryItem,
-} from '@/types/types';
+import { LocalWorkout, LocalExercise } from '@/types/types';
 import { useAuth } from '@/app/_layout';
 import { saveWorkout } from '@/services/WorkoutService';
 import { transformWorkoutForSubmission } from './utils/transformers';
+import { ExerciseLibraryItem } from '@/types/schema';
 
 // Helper for ID generation
 const generateLocalId = () =>

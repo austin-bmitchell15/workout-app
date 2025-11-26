@@ -12,7 +12,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import WorkoutHistoryCard from '@/components/workouts/WorkoutHistoryCard';
 import { useFocusEffect } from 'expo-router';
-import { FullWorkoutHistory } from '@/types/types';
+import { FullWorkoutHistory } from '@/types/api';
 
 export default function HistoryScreen() {
   const { session } = useAuth();

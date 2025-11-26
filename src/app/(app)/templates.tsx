@@ -10,8 +10,8 @@ import {
   View,
 } from 'react-native';
 import StyledButton from '../../components/common/StyledButton';
-import { TemplateRecord } from '@/types/types';
 import { useAuth } from '../_layout';
+import { TemplateRecord } from '@/types/schema';
 
 export default function TemplatesScreen() {
   const { session } = useAuth();
