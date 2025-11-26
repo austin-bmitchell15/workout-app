@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/services/supabase';
-import { ExerciseLibraryItem } from '../types';
+import { ExerciseLibrary, ExerciseLibraryItem } from '@/types/types';
 import { ThemedText } from '../themed-text';
 import StyledTextInput from '../common/StyledTextInput';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
+import { fetchExerciseLibrary } from '@/services/ExerciseService';
 
 type ExercisePickerModalProps = {
   visible: boolean;
@@ -22,16 +22,12 @@ type ExercisePickerModalProps = {
   onExerciseSelect: (exercise: ExerciseLibraryItem) => void;
 };
 
-interface ExerciseItem extends ExerciseLibraryItem {
-  primary_muscle_group?: string;
-}
-
 export default function ExercisePickerModal({
   visible,
   onClose,
   onExerciseSelect,
 }: ExercisePickerModalProps) {
-  const [exercises, setExercises] = useState<ExerciseItem[]>([]);
+  const [exercises, setExercises] = useState<ExerciseLibrary>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -43,26 +39,19 @@ export default function ExercisePickerModal({
 
   useEffect(() => {
     if (visible) {
-      fetchExercises();
+      getExerciseLibrary();
     }
   }, [visible]);
 
-  const fetchExercises = async () => {
+  const getExerciseLibrary = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('exercise_library')
-      .select('id, name, image_url, primary_muscle_group')
-      .order('name');
-
-    if (error) {
-      console.error(error);
-    } else {
-      setExercises(data || []);
-    }
+    const { data, error } = await fetchExerciseLibrary();
+    if (error) console.error(error);
+    setExercises(data || []);
     setLoading(false);
   };
 
-  const filteredExercises = exercises.filter(ex =>
+  const filteredExercises = exercises?.filter(ex =>
     ex.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 

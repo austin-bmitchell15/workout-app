@@ -7,7 +7,7 @@ jest.mock('../WorkoutService', () => ({
   saveWorkout: jest.fn(),
 }));
 
-// 2. Mock Supabase structure (just the entry point)
+// 2. Mock Supabase structure
 jest.mock('../supabase', () => ({
   supabase: {
     from: jest.fn(),
@@ -47,12 +47,11 @@ describe('ImportService', () => {
       expect(benchPress).toBeDefined();
       expect(benchPress?.sets).toHaveLength(2);
       expect(benchPress?.sets[0].weight).toBe(135);
+      expect(benchPress?.sets[0].reps).toBe(15);
     });
 
     it('handles empty or invalid CSV input', () => {
       expect(() => parseStrongCsv('')).toThrow('No data found');
-      // PapaParse usually handles invalid csv gracefully, but empty check catches it
-      // If passing truly garbage data, ensure your parser handles it or expect specific behavior
     });
   });
 
@@ -102,13 +101,11 @@ describe('ImportService', () => {
       },
     ];
 
-    it('resolves exercise IDs and saves workouts', async () => {
+    it('resolves exercise IDs, converts weights, and saves workouts', async () => {
       // 1. Mock "Existing Exercise" found
-      // The first call to maybeSingle should return the ID
       mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'ex-id-1' } });
 
-      // 2. Mock "New Exercise" NOT found
-      // The second call to maybeSingle returns null
+      // 2. Mock "New Exercise" NOT found (returns null)
       mockMaybeSingle.mockResolvedValueOnce({ data: null });
 
       // 3. Mock Insert for "New Exercise" success
@@ -119,33 +116,58 @@ describe('ImportService', () => {
 
       const onProgress = jest.fn();
 
+      // Trigger the batch save (Simulate User selecting 'lbs' as source)
       await batchSaveWorkouts(mockParsedWorkouts, 'user-1', 'lbs', onProgress);
 
       // Verify progress callback
       expect(onProgress).toHaveBeenCalledWith(1, 1);
 
-      // Verify DB checks
-      // We expect 'from' to be called for exercise_library lookups
+      // Verify DB checks for exercise library
       expect(mockFrom).toHaveBeenCalledWith('exercise_library');
 
-      // Verify Save Call
+      // Calculate expected KG weights
+      const KG_TO_LBS = 2.20462;
+      const expectedWeight1 = 100 / KG_TO_LBS;
+      const expectedWeight2 = 50 / KG_TO_LBS;
+
+      // Verify Save Call matches the internal logic of ImportService
       expect(saveWorkout).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: 'Test Workout',
+          workout: expect.objectContaining({
+            name: 'Test Workout',
+            user_id: 'user-1',
+            created_at: expect.any(String),
+          }),
           exercises: expect.arrayContaining([
+            // Check Existing Exercise
             expect.objectContaining({
-              exercise_library_id: 'ex-id-1',
-              name: 'Existing Exercise',
+              data: expect.objectContaining({
+                exercise_library_id: 'ex-id-1',
+                user_id: 'user-1',
+              }),
+              sets: expect.arrayContaining([
+                expect.objectContaining({
+                  weight: expectedWeight1, // Check conversion
+                  unit: 'kg',
+                  user_id: 'user-1',
+                }),
+              ]),
             }),
+            // Check New Exercise
             expect.objectContaining({
-              exercise_library_id: 'ex-id-2',
-              name: 'New Exercise',
+              data: expect.objectContaining({
+                exercise_library_id: 'ex-id-2',
+                user_id: 'user-1',
+              }),
+              sets: expect.arrayContaining([
+                expect.objectContaining({
+                  weight: expectedWeight2, // Check conversion
+                  unit: 'kg',
+                }),
+              ]),
             }),
           ]),
         }),
-        'user-1',
-        'lbs',
-        '2023-01-01',
       );
     });
   });

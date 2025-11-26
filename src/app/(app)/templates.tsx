@@ -10,8 +10,7 @@ import {
   View,
 } from 'react-native';
 import StyledButton from '../../components/common/StyledButton';
-import { TemplateRecord } from '../../components/types';
-import { supabase } from '../../services/supabase';
+import { TemplateRecord } from '@/types/types';
 import { useAuth } from '../_layout';
 
 export default function TemplatesScreen() {
@@ -24,14 +23,8 @@ export default function TemplatesScreen() {
     if (!session?.user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('workout_templates')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTemplates(data || []);
+      const data: any = 'test';
+      setTemplates(data);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', `Could not fetch templates: ${error.message}`);

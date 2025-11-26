@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { LocalWorkout, LocalExercise } from '@/components/types';
+import {
+  LocalWorkout,
+  LocalExercise,
+  FullWorkoutSubmission,
+  ExerciseLibraryItem,
+} from '@/types/types';
 import { useAuth } from '@/app/_layout';
 import { saveWorkout } from '@/services/WorkoutService';
 
@@ -20,7 +25,7 @@ export function useWorkoutForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPickerVisible, setPickerVisible] = useState(false);
 
-  const preferredUnit = profile?.preferred_unit || 'kg';
+  const preferredUnit = profile?.weight_unit ?? null;
 
   // --- Actions ---
 
@@ -28,11 +33,7 @@ export function useWorkoutForm() {
     setWorkout(prev => ({ ...prev, [field]: value }));
   };
 
-  const addExercise = (exerciseFromLibrary: {
-    id: string;
-    name: string;
-    image_url?: string;
-  }) => {
+  const addExercise = (exerciseFromLibrary: ExerciseLibraryItem) => {
     const newExercise: LocalExercise = {
       local_id: generateLocalId(),
       exercise_library_id: exerciseFromLibrary.id,
@@ -71,6 +72,45 @@ export function useWorkoutForm() {
     setWorkout(newWorkoutTemplate);
   };
 
+  const prepareSubmission = (
+    currentWorkout: LocalWorkout,
+    userId: string,
+  ): FullWorkoutSubmission => {
+    // Transform UI Exercises -> Supabase Exercises
+    const strictExercises = currentWorkout.exercises.map(ex => {
+      // Transform UI Sets -> Supabase Sets
+      const strictSets = ex.sets.map(s => ({
+        set_number: s.set_number,
+        reps: Number(s.reps) || 0,
+        weight:
+          preferredUnit === 'LB'
+            ? (Number(s.weight) || 0) / 2.20462
+            : Number(s.weight) || 0,
+        user_id: userId,
+        // workout_exercises_id is added in the service layer
+      }));
+
+      return {
+        data: {
+          exercise_library_id: ex.exercise_library_id,
+          notes: ex.notes,
+          user_id: userId,
+          // workout_id is added in the service layer
+        },
+        sets: strictSets,
+      };
+    });
+
+    return {
+      workout: {
+        name: currentWorkout.name || 'Untitled Workout',
+        notes: currentWorkout.notes,
+        user_id: userId,
+      },
+      exercises: strictExercises,
+    };
+  };
+
   const finishWorkout = async () => {
     if (!session?.user) {
       Alert.alert('Error', 'You must be logged in to save a workout.');
@@ -83,7 +123,8 @@ export function useWorkoutForm() {
 
     setIsSaving(true);
     try {
-      await saveWorkout(workout, session.user.id, preferredUnit);
+      const submission = prepareSubmission(workout, session.user.id);
+      await saveWorkout(submission);
       Alert.alert('Success!', 'Workout saved.');
       resetWorkout();
     } catch (error) {

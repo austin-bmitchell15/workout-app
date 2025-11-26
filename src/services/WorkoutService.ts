@@ -1,61 +1,33 @@
 import { supabase } from './supabase';
-import { LocalWorkout } from '../components/types';
+import { FullWorkoutSubmission } from '@/types/types';
 
-const KG_TO_LBS = 2.20462;
-
-export const saveWorkout = async (
-  workout: LocalWorkout,
-  userId: string,
-  preferredUnit: 'kg' | 'lbs',
-  customCreatedAt?: string,
-) => {
-  // 1. Create the Workout Record
+export const saveWorkout = async (submission: FullWorkoutSubmission) => {
+  // 1. Create Workout
   const { data: workoutData, error: workoutError } = await supabase
     .from('workouts')
-    .insert({
-      name: workout.name,
-      notes: workout.notes,
-      user_id: userId,
-      created_at: customCreatedAt,
-    })
+    .insert(submission.workout)
     .select()
     .single();
 
   if (workoutError) throw workoutError;
 
-  const newWorkoutId = workoutData.id;
-
-  // 2. Process Exercises and Sets
-  for (const ex of workout.exercises) {
+  // 2. Process Exercises
+  for (const ex of submission.exercises) {
     const { data: woExerciseData, error: woExerciseError } = await supabase
       .from('workout_exercises')
-      .insert({
-        user_id: userId,
-        workout_id: newWorkoutId,
-        exercise_library_id: ex.exercise_library_id,
-        notes: ex.notes,
-      })
+      .insert({ ...ex.data, workout_id: workoutData.id })
       .select()
       .single();
 
     if (woExerciseError) throw woExerciseError;
 
-    const newWorkoutExerciseId = woExerciseData.id;
-    console.log(newWorkoutExerciseId);
-
-    const setsToInsert = ex.sets.map(s => {
-      const rawWeight = Number(s.weight) || 0;
-      const weightInKg =
-        preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
-
-      return {
-        user_id: userId,
-        workout_exercises_id: newWorkoutExerciseId,
-        reps: Number(s.reps) || 0,
-        weight: weightInKg,
-        set_number: s.set_number,
-      };
-    });
+    // 3. Process Sets
+    // NO LOGIC HERE: Just map the IDs and insert.
+    const setsToInsert = ex.sets.map(s => ({
+      ...s,
+      workout_exercises_id: woExerciseData.id,
+      // We assume s.weight and s.reps are already numbers/converted
+    }));
 
     if (setsToInsert.length > 0) {
       const { error: setsError } = await supabase

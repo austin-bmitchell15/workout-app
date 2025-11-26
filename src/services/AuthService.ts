@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { Session } from '@supabase/supabase-js';
-import { Profile } from '@/components/types';
+import { Profile } from '@/types/types';
 
 // --- Authentication Actions ---
 

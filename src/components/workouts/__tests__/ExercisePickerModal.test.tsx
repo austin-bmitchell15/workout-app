@@ -10,7 +10,11 @@ import { supabase } from '@/services/supabase';
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn(),
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockReturnThis(),
+      })),
+    })),
   },
 }));
 

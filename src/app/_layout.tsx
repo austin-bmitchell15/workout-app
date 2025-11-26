@@ -8,7 +8,7 @@ import {
 } from 'expo-router';
 import { Session } from '@supabase/supabase-js';
 import { View, ActivityIndicator } from 'react-native';
-import { Profile } from '../components/types';
+import { Profile } from '@/types/types';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
   signOut,

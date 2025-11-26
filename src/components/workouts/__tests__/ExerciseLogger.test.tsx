@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import ExerciseLogger from '../ExerciseLogger';
-import { LocalExercise } from '@/components/types';
+import { LocalExercise } from '@/types/types';
 
 // Mock theme hook to return simple colors for testing
 jest.mock('@/hooks/theme/use-theme-color', () => ({
@@ -14,7 +14,7 @@ describe('ExerciseLogger', () => {
     exercise_library_id: 'lib-1',
     name: 'Squat',
     notes: 'Keep back straight',
-    image_url: undefined,
+    image_url: '',
     sets: [
       { local_id: 's-1', reps: '10', weight: '100', set_number: 1 },
       { local_id: 's-2', reps: '8', weight: '110', set_number: 2 },
@@ -30,7 +30,7 @@ describe('ExerciseLogger', () => {
     onChange: mockOnChange,
     onRemove: mockOnRemove,
     generateLocalId: mockGenerateId,
-    preferredUnit: 'kg' as const,
+    preferredUnit: 'KG' as const,
   };
 
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import SetLogger from '../SetLogger';
-import { LocalSet } from '../../types';
+import { LocalSet } from '@/types/types';
 
 // Mock theme hook
 jest.mock('@/hooks/theme/use-theme-color', () => ({
@@ -24,7 +24,7 @@ describe('SetLogger', () => {
         set={mockSet}
         onChange={mockOnChange}
         onRemove={mockOnRemove}
-        unitLabel="kg"
+        unitLabel="KG"
       />,
     );
 
@@ -39,7 +39,7 @@ describe('SetLogger', () => {
         set={mockSet}
         onChange={mockOnChange}
         onRemove={mockOnRemove}
-        unitLabel="kg"
+        unitLabel="KG"
       />,
     );
 
@@ -56,7 +56,7 @@ describe('SetLogger', () => {
         set={mockSet}
         onChange={mockOnChange}
         onRemove={mockOnRemove}
-        unitLabel="kg"
+        unitLabel="KG"
       />,
     );
 
