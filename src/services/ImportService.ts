@@ -1,12 +1,12 @@
 import Papa from 'papaparse';
 import { z } from 'zod';
 import { supabase } from './supabase';
-import {
-  FullWorkoutSubmission,
-  ExerciseSubmission,
-  SetSubmission,
-} from '@/types/types';
 import { saveWorkout } from './WorkoutService';
+import {
+  ExerciseSubmission,
+  FullWorkoutSubmission,
+  SetSubmission,
+} from '@/types/api';
 
 const KG_TO_LBS = 2.20462;
 
@@ -31,8 +31,8 @@ const StrongCsvRowSchema = z.object({
   'Workout Name': z.string(),
   Duration: z.string().optional().default(''),
   'Exercise Name': z.string(),
-  'Set Order': z.coerce.number(), // Forces string "1" to number 1
-  Weight: z.coerce.number().optional().default(0), // "225.5" -> 225.5, "" -> 0
+  'Set Order': z.coerce.number(),
+  Weight: z.coerce.number().optional().default(0),
   Reps: z.coerce.number().optional().default(0),
   Distance: z.coerce.number().optional().default(0),
   Seconds: z.coerce.number().optional().default(0),
@@ -166,9 +166,6 @@ export async function batchSaveWorkouts(
         const libraryId = await getOrCreateExerciseId(ex.name);
 
         const sets: SetSubmission[] = ex.sets.map(s => {
-          // CONVERSION LOGIC:
-          // If the CSV was in LBS, convert to KG before saving.
-          // If CSV was KG, keep as is.
           const finalWeight =
             sourceUnit === 'lbs' ? s.weight / KG_TO_LBS : s.weight;
 

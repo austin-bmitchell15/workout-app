@@ -1,8 +1,6 @@
-import {
-  LocalWorkout,
-  FullWorkoutSubmission,
-  WeightEnums,
-} from '@/types/types';
+import { FullWorkoutSubmission } from '@/types/api';
+import { WeightEnums } from '@/types/schema';
+import { LocalWorkout } from '@/types/types';
 
 export const transformWorkoutForSubmission = (
   workout: LocalWorkout,

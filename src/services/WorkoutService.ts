@@ -1,5 +1,5 @@
+import { FullWorkoutSubmission } from '@/types/api';
 import { supabase } from './supabase';
-import { FullWorkoutSubmission } from '@/types/types';
 
 export const saveWorkout = async (submission: FullWorkoutSubmission) => {
   try {

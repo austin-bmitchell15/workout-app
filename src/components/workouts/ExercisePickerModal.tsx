@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ExerciseLibrary, ExerciseLibraryItem } from '@/types/types';
 import { ThemedText } from '../themed-text';
 import StyledTextInput from '../common/StyledTextInput';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
 import { fetchExerciseLibrary } from '@/services/ExerciseService';
+import { ExerciseLibrary, ExerciseLibraryItem } from '@/types/schema';
 
 type ExercisePickerModalProps = {
   visible: boolean;

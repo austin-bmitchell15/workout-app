@@ -12,7 +12,6 @@ import ExerciseLogger from './ExerciseLogger';
 import ExercisePickerModal from './ExercisePickerModal';
 import StyledButton from '../common/StyledButton';
 import { useWorkoutForm } from '@/hooks/useWorkoutForm';
-import StyledTextInput from '@/components/common/StyledTextInput';
 import { ThemedView } from '@/components/themed-view';
 import { LocalExercise } from '@/types/types';
 import { WorkoutHeader } from './WorkoutHeader';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { LocalExercise, LocalSet, WeightEnums } from '@/types/types';
+import { LocalExercise, LocalSet } from '@/types/types';
 import { FontAwesome } from '@expo/vector-icons';
 import SetLogger from './SetLogger';
 import StyledTextInput from '@/components/common/StyledTextInput';
@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
 import { generateLocalId } from '@/utils/helpers';
+import { WeightEnums } from '@/types/schema';
 
 type ExerciseLoggerProps = {
   exercise: LocalExercise;

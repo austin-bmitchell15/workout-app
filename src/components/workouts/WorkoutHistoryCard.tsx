@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ThemedText } from '../themed-text';
+import { FullWorkoutHistory } from '@/types/api';
 
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -12,7 +13,7 @@ export const formatDate = (dateString: string) => {
 };
 
 type WorkoutHistoryCardProps = {
-  workout: any; // TODO: Define a type for this
+  workout: FullWorkoutHistory;
 };
 
 export default function WorkoutHistoryCard({
