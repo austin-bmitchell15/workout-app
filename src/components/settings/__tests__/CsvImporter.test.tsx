@@ -11,8 +11,23 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Alert } from 'react-native';
 
-jest.mock('expo-document-picker');
-jest.mock('expo-file-system/legacy');
+// UPDATE: Use a virtual mock to bypass module resolution issues
+jest.mock(
+  'expo-document-picker',
+  () => ({
+    getDocumentAsync: jest.fn(),
+  }),
+  { virtual: true },
+);
+
+jest.mock(
+  'expo-file-system/legacy',
+  () => ({
+    readAsStringAsync: jest.fn(),
+  }),
+  { virtual: true },
+);
+
 jest.mock('@/services/ImportService');
 jest.spyOn(Alert, 'alert');
 
