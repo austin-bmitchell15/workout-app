@@ -23,8 +23,7 @@ export default function TemplatesScreen() {
     if (!session?.user) return;
 
     try {
-      const data: any = 'test';
-      setTemplates(data);
+      setTemplates([]);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', `Could not fetch templates: ${error.message}`);

@@ -1,6 +1,7 @@
 import { FullWorkoutSubmission } from '@/types/api';
 import { WeightEnums } from '@/types/schema';
 import { LocalWorkout } from '@/types/types';
+import { lbsToKg } from '@/utils/helpers';
 
 export const transformWorkoutForSubmission = (
   workout: LocalWorkout,
@@ -13,7 +14,7 @@ export const transformWorkoutForSubmission = (
       reps: Number(s.reps) || 0,
       weight:
         preferredUnit === 'LB'
-          ? (Number(s.weight) || 0) / 2.20462
+          ? lbsToKg(Number(s.weight) || 0)
           : Number(s.weight) || 0,
       user_id: userId,
     }));

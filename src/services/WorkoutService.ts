@@ -1,11 +1,12 @@
 import { FullWorkoutSubmission } from '@/types/api';
+import { Json } from '@/types/supabase';
 import { supabase } from './supabase';
 
 export const saveWorkout = async (submission: FullWorkoutSubmission) => {
   try {
     const { data, error } = await supabase.rpc('save_full_workout', {
-      workout_data: submission.workout as any,
-      exercises_data: submission.exercises as any,
+      workout_data: submission.workout as unknown as Json,
+      exercises_data: submission.exercises as unknown as Json,
     });
 
     if (error) {

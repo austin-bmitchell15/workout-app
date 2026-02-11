@@ -16,9 +16,9 @@ import {
   ImportableWorkout,
 } from '@/services/ImportService';
 import { ThemedText } from '../themed-text';
-import { ThemedView } from '../themed-view'; // Import ThemedView
+import { ThemedView } from '../themed-view';
 import StyledButton from '../common/StyledButton';
-import StyledTextInput from '../common/StyledTextInput'; // Import StyledTextInput
+import StyledTextInput from '../common/StyledTextInput';
 import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 type CsvImporterProps = {
@@ -138,8 +138,10 @@ export default function CsvImporter({
       setWorkouts([]);
       setSelectedIds(new Set());
       setExcludedExerciseKeys(new Set());
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
       setProgress(null);

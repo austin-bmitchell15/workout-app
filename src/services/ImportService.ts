@@ -7,8 +7,7 @@ import {
   FullWorkoutSubmission,
   SetSubmission,
 } from '@/types/api';
-
-const KG_TO_LBS = 2.20462;
+import { LBS_TO_KG, generateLocalId } from '@/utils/helpers';
 
 export interface ImportableWorkout {
   id: string; // Temporary ID for list selection
@@ -129,7 +128,7 @@ export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
     }
 
     results.push({
-      id: Math.random().toString(36).substr(2, 9),
+      id: generateLocalId(),
       date: firstRow.Date,
       name: firstRow['Workout Name'],
       duration: firstRow.Duration,
@@ -167,7 +166,7 @@ export async function batchSaveWorkouts(
 
         const sets: SetSubmission[] = ex.sets.map(s => {
           const finalWeight =
-            sourceUnit === 'lbs' ? s.weight / KG_TO_LBS : s.weight;
+            sourceUnit === 'lbs' ? s.weight / LBS_TO_KG : s.weight;
 
           return {
             user_id: userId,

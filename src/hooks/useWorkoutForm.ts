@@ -5,10 +5,7 @@ import { useAuth } from '@/app/_layout';
 import { saveWorkout } from '@/services/WorkoutService';
 import { transformWorkoutForSubmission } from './utils/transformers';
 import { ExerciseLibraryItem } from '@/types/schema';
-
-// Helper for ID generation
-const generateLocalId = () =>
-  `local-${Math.random().toString(36).substring(2, 9)}`;
+import { generateLocalId } from '@/utils/helpers';
 
 const newWorkoutTemplate: LocalWorkout = {
   name: 'New Workout',
@@ -113,6 +110,5 @@ export function useWorkoutForm() {
     updateExercise,
     finishWorkout,
     resetWorkout,
-    generateLocalId, // Exposed for ExerciseLogger if needed, or better, move to utils
   };
 }
