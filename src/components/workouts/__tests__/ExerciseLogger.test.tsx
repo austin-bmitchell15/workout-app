@@ -16,6 +16,7 @@ jest.mock('@/hooks/theme/use-theme-color', () => ({
   useThemeColor: () => '#000',
 }));
 
+// Testing
 describe('ExerciseLogger', () => {
   const mockExercise: LocalExercise = {
     local_id: 'ex-1',

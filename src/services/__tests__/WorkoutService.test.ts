@@ -121,4 +121,43 @@ describe('WorkoutService', () => {
       expect(result.error).toEqual(mockError);
     });
   });
+
+  describe('getWorkoutHistory', () => {
+    it('should fetch history ordered by date', async () => {
+      const mockData = [{ id: '1', name: 'Morning Lift' }];
+
+      const mockOrder = jest
+        .fn()
+        .mockResolvedValue({ data: mockData, error: null });
+      const mockEq = jest.fn(() => ({ order: mockOrder }));
+      const mockSelect = jest.fn(() => ({ eq: mockEq }));
+
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: mockSelect,
+      });
+
+      const result = await getWorkoutHistory(mockUserId);
+
+      expect(supabase.from).toHaveBeenCalledWith('workouts');
+      expect(mockSelect).toHaveBeenCalledWith(
+        expect.stringContaining('workout_exercises'),
+      );
+      expect(mockEq).toHaveBeenCalledWith('user_id', mockUserId);
+      expect(result).toEqual(mockData);
+    });
+
+    it('should throw error if fetch fails', async () => {
+      const mockOrder = jest
+        .fn()
+        .mockResolvedValue({ data: null, error: { message: 'Fetch Error' } });
+      const mockEq = jest.fn(() => ({ order: mockOrder }));
+      const mockSelect = jest.fn(() => ({ eq: mockEq }));
+
+      (supabase.from as jest.Mock).mockReturnValue({ select: mockSelect });
+
+      await expect(getWorkoutHistory(mockUserId)).rejects.toMatchObject({
+        message: 'Fetch Error',
+      });
+    });
+  });
 });

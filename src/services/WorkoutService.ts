@@ -60,3 +60,35 @@ export const getWorkoutHistory = async (userId: string) => {
     return { data: null, error: err };
   }
 };
+
+export const getWorkoutHistory = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('workouts')
+    .select(
+      `
+      id,
+      name,
+      notes,
+      created_at,
+      workout_exercises (
+        id,
+        notes,
+        exercise_library (
+          name,
+          image_url
+        ),
+        sets (
+          id,
+          reps,
+          weight,
+          set_number
+        )
+      )
+    `,
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};

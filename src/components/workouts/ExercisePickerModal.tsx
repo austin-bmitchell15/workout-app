@@ -22,6 +22,11 @@ type ExercisePickerModalProps = {
   onExerciseSelect: (exercise: ExerciseLibraryItem) => void;
 };
 
+// Extended type for internal use
+interface ExerciseItem extends ExerciseLibraryItem {
+  primary_muscle_group?: string;
+}
+
 export default function ExercisePickerModal({
   visible,
   onClose,

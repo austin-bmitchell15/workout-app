@@ -6,6 +6,7 @@ import { useWorkoutForm } from '@/hooks/useWorkoutForm';
 
 jest.mock('@/hooks/useWorkoutForm');
 
+// Testing
 describe('ActiveWorkout Component', () => {
   // Default mock values
   const mockHookValues = {
