@@ -1,71 +1,64 @@
+import { FullWorkoutSubmission } from '@/types/api';
+import { Json } from '@/types/supabase';
 import { supabase } from './supabase';
-import { LocalWorkout } from '../components/types';
 
-const KG_TO_LBS = 2.20462;
-
-export const saveWorkout = async (
-  workout: LocalWorkout,
-  userId: string,
-  preferredUnit: 'kg' | 'lbs',
-  customCreatedAt?: string,
-) => {
-  // 1. Create the Workout Record
-  const { data: workoutData, error: workoutError } = await supabase
-    .from('workouts')
-    .insert({
-      name: workout.name,
-      notes: workout.notes,
-      user_id: userId,
-      created_at: customCreatedAt,
-    })
-    .select()
-    .single();
-
-  if (workoutError) throw workoutError;
-
-  const newWorkoutId = workoutData.id;
-
-  // 2. Process Exercises and Sets
-  for (const ex of workout.exercises) {
-    const { data: woExerciseData, error: woExerciseError } = await supabase
-      .from('workout_exercises')
-      .insert({
-        user_id: userId,
-        workout_id: newWorkoutId,
-        exercise_library_id: ex.exercise_library_id,
-        notes: ex.notes,
-      })
-      .select()
-      .single();
-
-    if (woExerciseError) throw woExerciseError;
-
-    const newWorkoutExerciseId = woExerciseData.id;
-    console.log(newWorkoutExerciseId);
-
-    const setsToInsert = ex.sets.map(s => {
-      const rawWeight = Number(s.weight) || 0;
-      const weightInKg =
-        preferredUnit === 'lbs' ? rawWeight / KG_TO_LBS : rawWeight;
-
-      return {
-        user_id: userId,
-        workout_exercises_id: newWorkoutExerciseId,
-        reps: Number(s.reps) || 0,
-        weight: weightInKg,
-        set_number: s.set_number,
-      };
+export const saveWorkout = async (submission: FullWorkoutSubmission) => {
+  try {
+    const { data, error } = await supabase.rpc('save_full_workout', {
+      workout_data: submission.workout as unknown as Json,
+      exercises_data: submission.exercises as unknown as Json,
     });
 
-    if (setsToInsert.length > 0) {
-      const { error: setsError } = await supabase
-        .from('sets')
-        .insert(setsToInsert);
-      if (setsError) throw setsError;
+    if (error) {
+      console.error('Error in save_full_workout RPC:', error);
+      return { data: null, error };
     }
-  }
 
-  return workoutData;
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+};
+
+export const getWorkoutHistory = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('workouts')
+      .select(
+        `
+        id,
+        name,
+        notes,
+        created_at,
+        workout_exercises (
+          id,
+          notes,
+          exercise_library (
+            id,
+            name,
+            image_url
+          ),
+          sets (
+            id,
+            reps,
+            weight,
+            set_number
+          )
+        )
+      `,
+      )
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching history:', error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 };
 
 export const getWorkoutHistory = async (userId: string) => {

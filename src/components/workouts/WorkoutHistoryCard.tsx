@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ThemedText } from '../themed-text';
+import { FullWorkoutHistory } from '@/types/api';
 
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -12,7 +13,7 @@ export const formatDate = (dateString: string) => {
 };
 
 type WorkoutHistoryCardProps = {
-  workout: any; // TODO: Define a type for this
+  workout: FullWorkoutHistory;
 };
 
 export default function WorkoutHistoryCard({
@@ -20,7 +21,7 @@ export default function WorkoutHistoryCard({
 }: WorkoutHistoryCardProps) {
   const totalSets =
     workout.workout_exercises?.reduce(
-      (acc: number, ex: any) => acc + (ex.sets?.length || 0),
+      (acc, ex) => acc + (ex.sets?.length || 0),
       0,
     ) || 0;
 
@@ -38,7 +39,7 @@ export default function WorkoutHistoryCard({
 
       {/* Quick preview of exercises */}
       <View style={styles.exerciseList}>
-        {workout.workout_exercises?.map((we: any) => (
+        {workout.workout_exercises?.map(we => (
           <Text key={we.id} style={styles.exerciseText} numberOfLines={1}>
             • {we.exercise_library?.name || 'Unknown Exercise'} (
             {we.sets?.length || 0} sets)

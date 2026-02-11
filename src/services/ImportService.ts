@@ -1,7 +1,13 @@
 import Papa from 'papaparse';
+import { z } from 'zod';
 import { supabase } from './supabase';
-import { LocalWorkout, LocalExercise, LocalSet } from '../components/types';
 import { saveWorkout } from './WorkoutService';
+import {
+  ExerciseSubmission,
+  FullWorkoutSubmission,
+  SetSubmission,
+} from '@/types/api';
+import { LBS_TO_KG, generateLocalId } from '@/utils/helpers';
 
 export interface ImportableWorkout {
   id: string; // Temporary ID for list selection
@@ -18,19 +24,22 @@ export interface ImportableWorkout {
   }[];
 }
 
-interface StrongCsvRow {
-  Date: string;
-  'Workout Name': string;
-  Duration: string;
-  'Exercise Name': string;
-  'Set Order': number;
-  Weight: number;
-  Reps: number;
-  Distance: number;
-  Seconds: number;
-  RPE: number;
-  Notes?: string;
-}
+// 1. Define Zod Schema for runtime validation
+const StrongCsvRowSchema = z.object({
+  Date: z.string(),
+  'Workout Name': z.string(),
+  Duration: z.string().optional().default(''),
+  'Exercise Name': z.string(),
+  'Set Order': z.coerce.number(),
+  Weight: z.coerce.number().optional().default(0),
+  Reps: z.coerce.number().optional().default(0),
+  Distance: z.coerce.number().optional().default(0),
+  Seconds: z.coerce.number().optional().default(0),
+  RPE: z.coerce.number().optional().default(0),
+  Notes: z.string().optional(),
+});
+
+type StrongCsvRow = z.infer<typeof StrongCsvRowSchema>;
 
 // Helper to find or create an exercise in the DB
 async function getOrCreateExerciseId(name: string): Promise<string> {
@@ -44,7 +53,7 @@ async function getOrCreateExerciseId(name: string): Promise<string> {
 
   const { data: newExercise, error } = await supabase
     .from('exercise_library')
-    .insert({ name, image_url: null })
+    .insert({ name, image_url: null, primary_muscle_group: 'Other' })
     .select()
     .single();
 
@@ -57,7 +66,7 @@ async function getOrCreateExerciseId(name: string): Promise<string> {
  * Does NOT interact with the database.
  */
 export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
-  const { data } = Papa.parse<StrongCsvRow>(csvContent, {
+  const { data } = Papa.parse<unknown>(csvContent, {
     header: true,
     dynamicTyping: true,
     skipEmptyLines: true,
@@ -67,10 +76,27 @@ export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
     throw new Error('No data found in CSV');
   }
 
+  const validRows: StrongCsvRow[] = [];
+
+  data.forEach((row, index) => {
+    const result = StrongCsvRowSchema.safeParse(row);
+    if (result.success) {
+      validRows.push(result.data);
+    } else {
+      console.warn(`Skipping invalid row at index ${index}:`, result.error);
+    }
+  });
+
+  if (validRows.length === 0) {
+    throw new Error(
+      'No valid rows found in CSV. Please check the file format.',
+    );
+  }
+
   // Group by Workout (Date + Name)
   const groupedWorkouts = new Map<string, StrongCsvRow[]>();
 
-  data.forEach(row => {
+  validRows.forEach(row => {
     const key = `${row.Date}|${row['Workout Name']}`;
     if (!groupedWorkouts.has(key)) {
       groupedWorkouts.set(key, []);
@@ -102,7 +128,7 @@ export function parseStrongCsv(csvContent: string): ImportableWorkout[] {
     }
 
     results.push({
-      id: Math.random().toString(36).substr(2, 9), // Temp ID for UI
+      id: generateLocalId(),
       date: firstRow.Date,
       name: firstRow['Workout Name'],
       duration: firstRow.Duration,
@@ -131,25 +157,32 @@ export async function batchSaveWorkouts(
   for (const w of workouts) {
     if (onProgress) onProgress(processed + 1, total);
 
-    const localExercises: LocalExercise[] = [];
+    const exercisesSubmission: ExerciseSubmission[] = [];
 
     // Resolve Exercise IDs
     for (const ex of w.exercises) {
       try {
         const libraryId = await getOrCreateExerciseId(ex.name);
 
-        const sets: LocalSet[] = ex.sets.map(s => ({
-          local_id: Math.random().toString(),
-          set_number: s.set_number,
-          weight: s.weight.toString(),
-          reps: s.reps.toString(),
-        }));
+        const sets: SetSubmission[] = ex.sets.map(s => {
+          const finalWeight =
+            sourceUnit === 'lbs' ? s.weight / LBS_TO_KG : s.weight;
 
-        localExercises.push({
-          local_id: Math.random().toString(),
-          exercise_library_id: libraryId,
-          name: ex.name,
-          notes: '',
+          return {
+            user_id: userId,
+            set_number: s.set_number,
+            weight: finalWeight,
+            reps: s.reps,
+            unit: 'kg',
+          };
+        });
+
+        exercisesSubmission.push({
+          data: {
+            exercise_library_id: libraryId,
+            user_id: userId,
+            notes: '',
+          },
           sets,
         });
       } catch (err) {
@@ -157,13 +190,16 @@ export async function batchSaveWorkouts(
       }
     }
 
-    const workoutToSave: LocalWorkout = {
-      name: w.name,
-      notes: `Imported from Strong. Duration: ${w.duration}`,
-      exercises: localExercises,
+    const workoutToSave: FullWorkoutSubmission = {
+      workout: {
+        name: w.name,
+        created_at: new Date(w.date).toISOString(),
+        user_id: userId,
+      },
+      exercises: exercisesSubmission,
     };
 
-    await saveWorkout(workoutToSave, userId, sourceUnit, w.date);
+    await saveWorkout(workoutToSave);
     processed++;
   }
 

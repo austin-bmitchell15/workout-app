@@ -12,17 +12,58 @@ describe('WorkoutHistoryCard', () => {
   const mockWorkout = {
     id: '1',
     name: 'Leg Day',
+    notes: 'NOTES',
     created_at: '2023-10-27T10:00:00Z',
     workout_exercises: [
       {
         id: 'we-1',
-        exercise_library: { name: 'Squat' },
-        sets: [{}, {}, {}], // 3 sets
+        notes: 'NOTES',
+        exercise_library: {
+          name: 'Squat',
+          image_url: 'image_url',
+        },
+        sets: [
+          {
+            id: 'ws-1',
+            reps: 12,
+            weight: 145,
+            set_number: 1,
+          },
+          {
+            id: 'ws-2',
+            reps: 6,
+            weight: 90,
+            set_number: 2,
+          },
+          {
+            set_number: 3,
+            id: 'ws-2',
+            reps: 6,
+            weight: 120,
+          },
+        ],
       },
       {
         id: 'we-2',
-        exercise_library: { name: 'Lunge' },
-        sets: [{}, {}], // 2 sets
+        notes: 'notes',
+        exercise_library: {
+          name: 'Lunge',
+          image_url: 'image_url',
+        },
+        sets: [
+          {
+            id: 'ws-4',
+            reps: 8,
+            weight: 145,
+            set_number: 1,
+          },
+          {
+            id: 'ws-5',
+            reps: 8,
+            weight: 145,
+            set_number: 2,
+          },
+        ],
       },
     ],
   };

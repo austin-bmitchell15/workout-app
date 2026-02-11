@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { LocalWorkout, LocalExercise } from '@/components/types';
+import { LocalWorkout, LocalExercise } from '@/types/types';
 import { useAuth } from '@/app/_layout';
 import { saveWorkout } from '@/services/WorkoutService';
-
-// Helper for ID generation
-const generateLocalId = () =>
-  `local-${Math.random().toString(36).substring(2, 9)}`;
+import { transformWorkoutForSubmission } from './utils/transformers';
+import { ExerciseLibraryItem } from '@/types/schema';
+import { generateLocalId } from '@/utils/helpers';
 
 const newWorkoutTemplate: LocalWorkout = {
   name: 'New Workout',
@@ -20,7 +19,7 @@ export function useWorkoutForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPickerVisible, setPickerVisible] = useState(false);
 
-  const preferredUnit = profile?.preferred_unit || 'kg';
+  const preferredUnit = profile?.weight_unit ?? null;
 
   // --- Actions ---
 
@@ -28,11 +27,7 @@ export function useWorkoutForm() {
     setWorkout(prev => ({ ...prev, [field]: value }));
   };
 
-  const addExercise = (exerciseFromLibrary: {
-    id: string;
-    name: string;
-    image_url?: string;
-  }) => {
+  const addExercise = (exerciseFromLibrary: ExerciseLibraryItem) => {
     const newExercise: LocalExercise = {
       local_id: generateLocalId(),
       exercise_library_id: exerciseFromLibrary.id,
@@ -82,18 +77,25 @@ export function useWorkoutForm() {
     }
 
     setIsSaving(true);
-    try {
-      await saveWorkout(workout, session.user.id, preferredUnit);
-      Alert.alert('Success!', 'Workout saved.');
-      resetWorkout();
-    } catch (error) {
+
+    const submission = transformWorkoutForSubmission(
+      workout,
+      session.user.id,
+      preferredUnit,
+    );
+    const { error } = await saveWorkout(submission);
+
+    setIsSaving(false);
+
+    if (error) {
       console.error('Error saving workout:', error);
-      if (error instanceof Error) {
-        Alert.alert('Error', `Failed to save workout: ${error.message}`);
-      }
-    } finally {
-      setIsSaving(false);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Error', `Failed to save workout: ${msg}`);
+      return;
     }
+
+    Alert.alert('Success!', 'Workout saved.');
+    resetWorkout();
   };
 
   return {
@@ -108,6 +110,5 @@ export function useWorkoutForm() {
     updateExercise,
     finishWorkout,
     resetWorkout,
-    generateLocalId, // Exposed for ExerciseLogger if needed, or better, move to utils
   };
 }

@@ -1,19 +1,17 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
-import { LocalSet } from '../types';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { LocalSet } from '@/types/types';
 import { FontAwesome } from '@expo/vector-icons';
+import { ThemedText } from '../themed-text';
+import StyledTextInput from '../common/StyledTextInput';
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
+import { WeightEnums } from '@/types/schema';
 
 type SetLoggerProps = {
   set: LocalSet;
   onChange: (set: LocalSet) => void;
   onRemove: (localId: string) => void;
-  unitLabel: 'kg' | 'lbs';
+  unitLabel: WeightEnums;
 };
 
 export default function SetLogger({
@@ -22,35 +20,38 @@ export default function SetLogger({
   onRemove,
   unitLabel,
 }: SetLoggerProps) {
+  const iconColor = useThemeColor({}, 'icon');
+
   return (
     <View style={styles.setRow}>
       <View style={styles.setCol}>
-        <Text style={styles.setText}>{set.set_number}</Text>
+        <ThemedText style={styles.setText}>{set.set_number}</ThemedText>
       </View>
       <View style={styles.weightCol}>
-        <TextInput
+        <StyledTextInput
           style={styles.input}
-          placeholder={unitLabel}
-          placeholderTextColor="#888"
+          placeholder={unitLabel?.toString()}
           keyboardType="numeric"
           value={set.weight}
           onChangeText={text => onChange({ ...set, weight: text })}
+          testID={`set-weight-${set.local_id}`}
         />
       </View>
       <View style={styles.repsCol}>
-        <TextInput
+        <StyledTextInput
           style={styles.input}
           placeholder="reps"
-          placeholderTextColor="#888"
           keyboardType="numeric"
           value={set.reps}
           onChangeText={text => onChange({ ...set, reps: text })}
+          testID={`set-reps-${set.local_id}`}
         />
       </View>
       <TouchableOpacity
         style={styles.removeCol}
-        onPress={() => onRemove(set.local_id)}>
-        <FontAwesome name="minus-circle" size={20} color="#adb5bd" />
+        onPress={() => onRemove(set.local_id)}
+        testID={`remove-set-${set.local_id}`}>
+        <FontAwesome name="minus-circle" size={20} color={iconColor} />
       </TouchableOpacity>
     </View>
   );
@@ -64,14 +65,8 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
     textAlign: 'center',
-    backgroundColor: 'white',
-    fontSize: 16,
-    color: '#000',
+    backgroundColor: 'transparent',
   },
   setText: {
     fontSize: 16,

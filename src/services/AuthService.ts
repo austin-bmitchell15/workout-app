@@ -1,6 +1,6 @@
+import { Profile } from '@/types/schema';
 import { supabase } from './supabase';
 import { Session } from '@supabase/supabase-js';
-import { Profile } from '@/components/types';
 
 // --- Authentication Actions ---
 
@@ -50,7 +50,7 @@ export function onAuthStateChange(callback: (session: Session | null) => void) {
 
 export async function getUserProfile(
   userId: string,
-): Promise<{ data: Profile | null; error: any }> {
+): Promise<{ data: Profile | null; error: Error | null }> {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -59,10 +59,13 @@ export async function getUserProfile(
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      return { data: null, error };
+      return { data: null, error: new Error(error.message) };
     }
     return { data, error: null };
-  } catch (error) {
-    return { data: null, error };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Unknown error'),
+    };
   }
 }

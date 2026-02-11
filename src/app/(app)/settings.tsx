@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Switch,
-  TouchableOpacity,
-  View,
-  Modal,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../_layout';
@@ -16,7 +10,6 @@ import CsvImporter from '@/components/settings/CsvImporter';
 export default function SettingsScreen() {
   const { session, signOut } = useAuth();
   const [isImportModalVisible, setImportModalVisible] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Placeholder for actual theme logic
 
   const handleImportComplete = () => {
     setImportModalVisible(false);
@@ -32,17 +25,6 @@ export default function SettingsScreen() {
         <View style={styles.row}>
           <ThemedText>Email</ThemedText>
           <ThemedText style={styles.value}>{session?.user?.email}</ThemedText>
-        </View>
-      </View>
-
-      {/* Preferences Section */}
-      <View style={styles.section}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Preferences
-        </ThemedText>
-        <View style={styles.row}>
-          <ThemedText>Dark Mode</ThemedText>
-          <Switch value={isDarkMode} onValueChange={setIsDarkMode} />
         </View>
       </View>
 

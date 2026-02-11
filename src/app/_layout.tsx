@@ -8,7 +8,6 @@ import {
 } from 'expo-router';
 import { Session } from '@supabase/supabase-js';
 import { View, ActivityIndicator } from 'react-native';
-import { Profile } from '../components/types';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
   signOut,
@@ -16,6 +15,7 @@ import {
   onAuthStateChange,
   getUserProfile,
 } from '@/services/AuthService';
+import { Profile } from '@/types/schema';
 
 interface AuthContextType {
   session: Session | null;
@@ -50,7 +50,6 @@ export default function RootLayout() {
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
 
-  // Helper to fetch profile
   const loadProfile = async (userId: string) => {
     const { data, error } = await getUserProfile(userId);
     if (error) {
@@ -63,7 +62,6 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    // 1. Check initial session
     const initSession = async () => {
       const initialSession = await getInitialSession();
       setSession(initialSession);
@@ -96,16 +94,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading) return;
 
-    // Wait for navigation to be ready
     if (!rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session && !inAuthGroup) {
-      // If not logged in and not in (auth) group, go to login
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      // If logged in and stuck in (auth) group, go to app
       router.replace('/(app)');
     }
   }, [session, loading, segments, router, rootNavigationState?.key]);
