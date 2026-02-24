@@ -8,13 +8,13 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
-import { useThemeColor } from '@/hooks/theme/use-theme-color'; // Import theme hook
+import { useThemeColor } from '@/hooks/theme/use-theme-color';
 
 interface StyledButtonProps extends TouchableOpacityProps {
   title: string;
   type?: 'primary' | 'secondary' | 'danger';
   style?: StyleProp<ViewStyle>;
-  isLoading?: boolean; // Add loading prop
+  isLoading?: boolean;
 }
 
 export default function StyledButton({
@@ -24,20 +24,38 @@ export default function StyledButton({
   isLoading = false,
   ...props
 }: StyledButtonProps) {
-  const primaryColor = useThemeColor({}, 'tint'); // Use your global tint color
+  const primaryColor = useThemeColor({}, 'tint');
 
-  // Define dynamic styles based on type
+  // Define dynamic colors for Secondary/Danger/Disabled states
+  const secondaryBg = useThemeColor(
+    { light: '#e9ecef', dark: '#2C3036' }, // Light Gray vs Dark Card
+    'card',
+  );
+  const dangerBg = useThemeColor(
+    { light: '#f8d7da', dark: '#58151c' }, // Pink vs Dark Red
+    'background',
+  );
+  const disabledBg = useThemeColor(
+    { light: '#cccccc', dark: '#3E444A' },
+    'icon',
+  );
+
+  const dangerText = useThemeColor(
+    { light: '#dc3545', dark: '#ff6b6b' }, // Dark Red vs Light Red
+    'text',
+  );
+
   const getBackgroundColor = () => {
-    if (props.disabled || isLoading) return '#ccc'; // Or a themed disabled color
+    if (props.disabled || isLoading) return disabledBg;
     if (type === 'primary') return primaryColor;
-    if (type === 'danger') return '#f8d7da'; // Consider theming this too
-    return '#e9ecef';
+    if (type === 'danger') return dangerBg;
+    return secondaryBg;
   };
 
   const getTextColor = () => {
     if (type === 'primary') return 'white';
-    if (type === 'danger') return '#dc3545';
-    return primaryColor;
+    if (type === 'danger') return dangerText;
+    return primaryColor; // Tint color usually works on both Secondary backgrounds
   };
 
   return (

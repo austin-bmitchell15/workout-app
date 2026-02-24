@@ -6,17 +6,23 @@ import {
   useSegments,
   useRootNavigationState,
 } from 'expo-router';
-import { supabase } from '../services/supabase';
 import { Session } from '@supabase/supabase-js';
 import { View, ActivityIndicator } from 'react-native';
-import { Profile } from '../components/types';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {
+  signOut,
+  getInitialSession,
+  onAuthStateChange,
+  getUserProfile,
+} from '@/services/AuthService';
+import { Profile } from '@/types/schema';
 
 interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
   setProfile: (profile: Profile | null) => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   setProfile: () => {},
+  signOut: async () => {},
 });
 
 export const useAuth = () => {
@@ -43,77 +50,66 @@ export default function RootLayout() {
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
 
-  useEffect(() => {
-    // Fetch the session on mount
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        if (session) {
-          fetchProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        console.error('Session check failed:', err);
-        setLoading(false); // Ensure we don't get stuck on spinner
-      });
+  const loadProfile = async (userId: string) => {
+    const { data, error } = await getUserProfile(userId);
+    if (error) {
+      console.error('Error fetching profile:', error);
+    }
+    if (data) {
+      setProfile(data);
+    }
+    setLoading(false);
+  };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchProfile(session.user.id);
+  useEffect(() => {
+    const initSession = async () => {
+      const initialSession = await getInitialSession();
+      setSession(initialSession);
+      if (initialSession) {
+        await loadProfile(initialSession.user.id);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initSession();
+
+    // 2. Listen for auth changes
+    const subscription = onAuthStateChange(async newSession => {
+      setSession(newSession);
+      if (newSession) {
+        await loadProfile(newSession.user.id);
       } else {
         setProfile(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // --- NAVIGATION PROTECTION LOGIC ---
   useEffect(() => {
     if (loading) return;
 
-    // Wait for navigation to be ready
     if (!rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session && !inAuthGroup) {
-      // If not logged in and not in (auth) group, go to login
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      // If logged in and stuck in (auth) group, go to app
       router.replace('/(app)');
     }
   }, [session, loading, segments, router, rootNavigationState?.key]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    setSession(null);
+    router.replace('/(auth)/login');
+  };
 
   if (loading) {
     return (
@@ -126,7 +122,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-        <AuthContext.Provider value={{ session, profile, loading, setProfile }}>
+        <AuthContext.Provider
+          value={{
+            session,
+            profile,
+            loading,
+            setProfile,
+            signOut: handleSignOut,
+          }}>
           <Slot />
         </AuthContext.Provider>
       </BottomSheetModalProvider>

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Button, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 import { signInWithEmail, signUpWithEmail } from '@/services/AuthService';
+import StyledTextInput from '../common/StyledTextInput';
+import StyledButton from '../common/StyledButton';
+import { ThemedView } from '../themed-view';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -17,18 +20,18 @@ export default function Auth() {
 
   async function handleSignUp() {
     setLoading(true);
-    const { data, error } = await signUpWithEmail(email, password);
+    const { session, error } = await signUpWithEmail(email, password);
 
     if (error) Alert.alert(error.message);
-    if (!data.session)
+    if (!session)
       Alert.alert('Please check your inbox for email verification!');
     setLoading(false);
   }
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <TextInput
+        <StyledTextInput
           onChangeText={text => setEmail(text)}
           value={email}
           placeholder="email@address.com"
@@ -36,7 +39,7 @@ export default function Auth() {
         />
       </View>
       <View style={styles.verticallySpaced}>
-        <TextInput
+        <StyledTextInput
           onChangeText={text => setPassword(text)}
           value={password}
           secureTextEntry={true}
@@ -45,20 +48,20 @@ export default function Auth() {
         />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
+        <StyledButton
           title="Sign in"
           disabled={loading}
           onPress={() => handleSignIn()}
         />
       </View>
       <View style={styles.verticallySpaced}>
-        <Button
+        <StyledButton
           title="Sign up"
           disabled={loading}
           onPress={() => handleSignUp()}
         />
       </View>
-    </View>
+    </ThemedView>
   );
 }
 

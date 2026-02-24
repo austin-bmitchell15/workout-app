@@ -2,11 +2,12 @@ import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import StyledTextInput from '../StyledTextInput';
 
-// Mock the theme hook
+// Mock Themes
 jest.mock('@/hooks/theme/use-theme-color', () => ({
   useThemeColor: () => '#000000', // Return black for testing
 }));
 
+// Testing
 describe('StyledTextInput', () => {
   it('renders correctly with placeholder', () => {
     render(<StyledTextInput placeholder="Enter text" />);
