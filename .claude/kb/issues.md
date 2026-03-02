@@ -12,21 +12,17 @@
 
 ### Templates Screen (Placeholder)
 - **File:** `src/app/(app)/templates.tsx`
-- **Status:** Screen renders a list of templates from Supabase but "Start Workout" button shows an `Alert` stub
+- **Status:** Screen renders list with dark mode support, but "Start Workout" button shows an `Alert` stub
 - **Missing:** Logic to load a template into `useWorkoutForm` state
 - **Dependency:** `useWorkoutForm` needs an `initFromTemplate(template)` action
 
-### Profile Edit Username (Not Implemented)
-- **File:** `src/app/(app)/profile.tsx`
-- **Status:** Button present, triggers `Alert` with "Not Implemented" message
-- **Missing:** Input field, `UPDATE profiles SET username` Supabase call
-
 ## Architecture Limitations
 
-### No Database Migrations
-- **Issue:** Schema is managed entirely in the Supabase dashboard — no migration files in the repo
-- **Risk:** Schema drift between environments, no history of changes
-- **Workaround:** Document schema in `kb/architecture.md`
+### No Migration Files in Repo
+- **Issue:** No `.sql` migration files tracked in the repo
+- **Workflow:** Apply schema changes via Supabase MCP `apply_migration` tool, then regenerate types with `generate_typescript_types`
+- **Risk:** Schema drift between environments, no local history of changes
+- **Workaround:** Document current schema in `kb/architecture.md`
 
 ### No Offline Support
 - **Issue:** All reads/writes require live Supabase connection
@@ -57,3 +53,8 @@
 ## Husky Pre-commit
 - **Issue:** First-time setup after cloning may need `yarn prepare` to install Husky hooks
 - **Fix:** `yarn prepare` (runs automatically on `yarn install` in most cases)
+
+### Pre-commit Hook in Non-Interactive Environments
+- **Issue:** The hook originally had `exec < /dev/tty` which fatally errors in non-interactive shells (CI, Claude tool execution)
+- **Fix applied:** Changed to `if tty -s 2>/dev/null; then exec < /dev/tty; fi` in `.husky/pre-commit`
+- **Hook runs:** `yarn typecheck` → `yarn lint-staged` → `yarn test --passWithNoTests`
