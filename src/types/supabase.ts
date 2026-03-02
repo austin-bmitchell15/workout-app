@@ -61,6 +61,7 @@ export type Database = {
           first_name: string | null;
           id: string;
           last_name: string | null;
+          theme_preference: string | null;
           updated_at: string | null;
           weight_unit: Database['public']['Enums']['UNIT_TYPE'] | null;
         };
@@ -69,6 +70,7 @@ export type Database = {
           first_name?: string | null;
           id: string;
           last_name?: string | null;
+          theme_preference?: string | null;
           updated_at?: string | null;
           weight_unit?: Database['public']['Enums']['UNIT_TYPE'] | null;
         };
@@ -77,6 +79,7 @@ export type Database = {
           first_name?: string | null;
           id?: string;
           last_name?: string | null;
+          theme_preference?: string | null;
           updated_at?: string | null;
           weight_unit?: Database['public']['Enums']['UNIT_TYPE'] | null;
         };

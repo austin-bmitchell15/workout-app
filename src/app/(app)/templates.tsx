@@ -12,12 +12,24 @@ import {
 import StyledButton from '../../components/common/StyledButton';
 import { useAuth } from '../_layout';
 import { TemplateRecord } from '@/types/schema';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 export default function TemplatesScreen() {
   const { session } = useAuth();
+  const { colorScheme } = useAppTheme();
+  const isDark = colorScheme === 'dark';
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const c = {
+    pageBg: isDark ? '#1c1c1e' : '#f5f5f5',
+    cardBg: isDark ? '#2c2c2e' : 'white',
+    cardBorder: isDark ? '#48484a' : '#eee',
+    primaryText: isDark ? '#ECEDEE' : '#333',
+    secondaryText: isDark ? '#9BA1A6' : '#777',
+    mutedText: isDark ? '#636366' : '#999',
+  };
 
   const fetchTemplates = useCallback(async () => {
     if (!session?.user) return;
@@ -47,8 +59,14 @@ export default function TemplatesScreen() {
   };
 
   const renderItem = ({ item }: { item: TemplateRecord }) => (
-    <View style={styles.itemContainer}>
-      <Text style={styles.itemTitle}>{item.name}</Text>
+    <View
+      style={[
+        styles.itemContainer,
+        { backgroundColor: c.cardBg, borderColor: c.cardBorder },
+      ]}>
+      <Text style={[styles.itemTitle, { color: c.primaryText }]}>
+        {item.name}
+      </Text>
       <StyledButton
         title="Start"
         onPress={() => {
@@ -60,14 +78,14 @@ export default function TemplatesScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: c.pageBg }]}>
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: c.pageBg }]}>
       <Stack.Screen options={{ title: 'Workout Templates' }} />
       <FlatList
         data={templates}
@@ -78,8 +96,10 @@ export default function TemplatesScreen() {
         }
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text style={styles.emptyText}>No templates saved yet.</Text>
-            <Text style={styles.emptySubText}>
+            <Text style={[styles.emptyText, { color: c.secondaryText }]}>
+              No templates saved yet.
+            </Text>
+            <Text style={[styles.emptySubText, { color: c.mutedText }]}>
               You can save a workout as a template from the &quot;Log
               Workout&quot; tab.
             </Text>

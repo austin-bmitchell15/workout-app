@@ -35,6 +35,16 @@ export default function SettingsScreen() {
   const { themePreference, setThemePreference, colorScheme } = useAppTheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+
+  const handleThemeChange = async (pref: ThemePreference) => {
+    await setThemePreference(pref);
+    if (!session?.user || !profile) return;
+    await supabase
+      .from('profiles')
+      .update({ theme_preference: pref })
+      .eq('id', session.user.id);
+    setProfile({ ...profile, theme_preference: pref });
+  };
   const [unitLoading, setUnitLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [isImportModalVisible, setImportModalVisible] = useState(false);
@@ -273,7 +283,7 @@ export default function SettingsScreen() {
                 themePreference === opt.value && styles.themeButtonActive,
                 themePreference !== opt.value && { backgroundColor: c.cardBg },
               ]}
-              onPress={() => setThemePreference(opt.value)}>
+              onPress={() => handleThemeChange(opt.value)}>
               <FontAwesome
                 name={opt.icon}
                 size={18}
