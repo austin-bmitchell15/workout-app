@@ -36,6 +36,7 @@ jest.mock('expo-router', () => {
     useSegments: () => [],
     useRootNavigationState: () => ({ key: 'root', routes: [] }),
     Link: ({ children }) => <View>{children}</View>,
+    Stack: { Screen: () => null },
   };
 });
 
@@ -46,3 +47,20 @@ jest.mock('react-native-gesture-handler', () => {
     GestureHandlerRootView: ({ children }) => <View>{children}</View>,
   };
 });
+
+// 7. Mock react-native-reanimated
+jest.mock('react-native-reanimated', () =>
+  require('react-native-reanimated/mock'),
+);
+
+// 8. Mock expo-haptics
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(),
+  notificationAsync: jest.fn(),
+  ImpactFeedbackStyle: { Light: 'Light', Medium: 'Medium', Heavy: 'Heavy' },
+  NotificationFeedbackType: {
+    Success: 'Success',
+    Warning: 'Warning',
+    Error: 'Error',
+  },
+}));

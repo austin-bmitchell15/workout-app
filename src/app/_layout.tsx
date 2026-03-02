@@ -1,5 +1,6 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import { ThemeProvider } from '../contexts/ThemeContext';
 import {
   useRouter,
   Slot,
@@ -120,19 +121,21 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthContext.Provider
-          value={{
-            session,
-            profile,
-            loading,
-            setProfile,
-            signOut: handleSignOut,
-          }}>
-          <Slot />
-        </AuthContext.Provider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <AuthContext.Provider
+            value={{
+              session,
+              profile,
+              loading,
+              setProfile,
+              signOut: handleSignOut,
+            }}>
+            <Slot />
+          </AuthContext.Provider>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }

@@ -58,29 +58,26 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
-          full_name: string | null;
+          first_name: string | null;
           id: string;
+          last_name: string | null;
           updated_at: string | null;
-          username: string | null;
-          website: string | null;
           weight_unit: Database['public']['Enums']['UNIT_TYPE'] | null;
         };
         Insert: {
           avatar_url?: string | null;
-          full_name?: string | null;
+          first_name?: string | null;
           id: string;
+          last_name?: string | null;
           updated_at?: string | null;
-          username?: string | null;
-          website?: string | null;
           weight_unit?: Database['public']['Enums']['UNIT_TYPE'] | null;
         };
         Update: {
           avatar_url?: string | null;
-          full_name?: string | null;
+          first_name?: string | null;
           id?: string;
+          last_name?: string | null;
           updated_at?: string | null;
-          username?: string | null;
-          website?: string | null;
           weight_unit?: Database['public']['Enums']['UNIT_TYPE'] | null;
         };
         Relationships: [];

@@ -36,7 +36,7 @@ export default function DashboardScreen() {
 
       <View style={styles.header}>
         <Text style={styles.headerText}>
-          Welcome, {profile?.username || 'User'}!
+          Welcome, {profile?.first_name || 'User'}!
         </Text>
       </View>
 
