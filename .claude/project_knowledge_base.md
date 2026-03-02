@@ -4,7 +4,7 @@
 
 ## Project Overview
 React Native workout tracking app (Expo 54 / expo-router v6 / TypeScript strict / Supabase backend).
-Features: auth, workout logging w/ exercises & sets, workout history, unit conversion (kg↔lbs), templates (WIP).
+Features: auth, workout logging w/ exercises & sets, workout history, unit conversion (kg↔lbs), profile editing, avatar upload, theme preference (light/dark/system), CSV import from Strong, templates (WIP).
 
 ## Quick Reference
 | Topic | File | Load When |
@@ -17,8 +17,11 @@ Features: auth, workout logging w/ exercises & sets, workout history, unit conve
 | Issues & Gotchas | `kb/issues.md` | Debugging, investigating odd behavior |
 
 ## Key Files (Absolute Paths)
-- Types: `src/components/types.ts`
+- Supabase generated types: `src/types/supabase.ts`
+- Shared domain types: `src/types/schema.ts` (re-exports Tables<>, Profile, etc.)
 - Auth context + root layout: `src/app/_layout.tsx`
+- Theme context: `src/contexts/ThemeContext.tsx`
+- Auth service: `src/services/AuthService.ts`
 - Workout hook: `src/hooks/useWorkoutForm.ts`
 - Workout service: `src/services/WorkoutService.ts`
 - Active workout UI: `src/components/workouts/ActiveWorkout.tsx`
@@ -32,10 +35,9 @@ Features: auth, workout logging w/ exercises & sets, workout history, unit conve
 - CI: `.github/workflows/main.yml`, `claude.yml`, `claude-code-review.yml`
 
 ## Current Branch
-`claude-skills` — branched from `main`
+`settings-page` — branched from `main`
 
 ## Known Issues (Quick Ref)
 - Console-logs Supabase URL/key in `src/services/supabase.ts:15-16` — should be removed
-- Templates screen is a placeholder (alert stub only)
-- Profile "Edit Username" is not implemented
-- No migration files; schema managed in Supabase dashboard
+- Templates "Start Workout" is a stub alert — loading template into useWorkoutForm not built
+- No migration files tracked in repo; apply via Supabase MCP `apply_migration` tool

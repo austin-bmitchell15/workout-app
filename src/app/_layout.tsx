@@ -1,5 +1,16 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+} from 'react';
+import {
+  ThemeProvider,
+  useAppTheme,
+  ThemePreference,
+} from '../contexts/ThemeContext';
 import {
   useRouter,
   Slot,
@@ -40,6 +51,22 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Syncs the user's saved theme preference from their profile into ThemeContext on first load.
+function ProfileThemeSyncer() {
+  const { profile } = useAuth();
+  const { setThemePreference } = useAppTheme();
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (profile?.theme_preference && !initialized.current) {
+      initialized.current = true;
+      setThemePreference(profile.theme_preference as ThemePreference);
+    }
+  }, [profile?.theme_preference, setThemePreference]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -120,19 +147,22 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthContext.Provider
-          value={{
-            session,
-            profile,
-            loading,
-            setProfile,
-            signOut: handleSignOut,
-          }}>
-          <Slot />
-        </AuthContext.Provider>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <AuthContext.Provider
+            value={{
+              session,
+              profile,
+              loading,
+              setProfile,
+              signOut: handleSignOut,
+            }}>
+            <ProfileThemeSyncer />
+            <Slot />
+          </AuthContext.Provider>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }

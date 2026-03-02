@@ -1,60 +1,162 @@
-import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { Stack } from 'expo-router';
+import { supabase } from '@/services/supabase';
 import { useAuth } from '../_layout';
-import StyledButton from '../../components/common/StyledButton';
+import { useAppTheme } from '@/contexts/ThemeContext';
+import StyledTextInput from '@/components/common/StyledTextInput';
+import StyledButton from '@/components/common/StyledButton';
 
 export default function ProfileScreen() {
-  const { profile } = useAuth();
+  const { profile, session, setProfile } = useAuth();
+  const { colorScheme } = useAppTheme();
+  const isDark = colorScheme === 'dark';
 
-  const handleUpdateUsername = () => {
-    Alert.alert(
-      'Not Implemented',
-      'This feature will allow you to update your username.',
-    );
+  const [firstName, setFirstName] = useState(profile?.first_name ?? '');
+  const [lastName, setLastName] = useState(profile?.last_name ?? '');
+  const [loading, setLoading] = useState(false);
+
+  const isDirty =
+    firstName !== (profile?.first_name ?? '') ||
+    lastName !== (profile?.last_name ?? '');
+
+  const handleSave = async () => {
+    if (!session?.user || !profile) return;
+
+    setLoading(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ first_name: firstName.trim(), last_name: lastName.trim() })
+      .eq('id', session.user.id);
+
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      setProfile({
+        ...profile,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      });
+      Alert.alert('Saved', 'Your profile has been updated.');
+    }
+    setLoading(false);
+  };
+
+  const c = {
+    pageBg: isDark ? '#1c1c1e' : '#f2f2f7',
+    cardBg: isDark ? '#2c2c2e' : '#fff',
+    primaryText: isDark ? '#ECEDEE' : '#000',
+    secondaryText: isDark ? '#9BA1A6' : '#6e6e73',
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'My Profile' }} />
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: c.pageBg }]}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
+        <Stack.Screen options={{ title: 'Edit Profile' }} />
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{useAuth().session?.user.email}</Text>
+        <Text style={[styles.sectionHeader, { color: c.secondaryText }]}>
+          NAME
+        </Text>
+        <View style={[styles.card, { backgroundColor: c.cardBg }]}>
+          <Text style={[styles.fieldLabel, { color: c.secondaryText }]}>
+            First Name
+          </Text>
+          <StyledTextInput
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+            autoCapitalize="words"
+          />
+          <Text
+            style={[
+              styles.fieldLabel,
+              styles.fieldLabelSpaced,
+              { color: c.secondaryText },
+            ]}>
+            Last Name
+          </Text>
+          <StyledTextInput
+            placeholder="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+            autoCapitalize="words"
+          />
+        </View>
 
-        <Text style={styles.label}>Username</Text>
-        <Text style={styles.value}>{profile?.username || 'Not set'}</Text>
+        <Text style={[styles.sectionHeader, { color: c.secondaryText }]}>
+          ACCOUNT
+        </Text>
+        <View style={[styles.card, { backgroundColor: c.cardBg }]}>
+          <Text style={[styles.fieldLabel, { color: c.secondaryText }]}>
+            Email
+          </Text>
+          <Text style={[styles.emailValue, { color: c.primaryText }]}>
+            {session?.user.email ?? '—'}
+          </Text>
+        </View>
 
         <StyledButton
-          title="Edit Username"
-          style={{ marginTop: 20 }}
-          onPress={handleUpdateUsername}
+          title={loading ? 'Saving...' : 'Save Changes'}
+          type="primary"
+          onPress={handleSave}
+          isLoading={loading}
+          disabled={!isDirty || loading}
+          style={styles.saveButton}
         />
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 15,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 24,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
   },
-  label: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 15,
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 6,
   },
-  value: {
-    fontSize: 18,
-    color: '#000',
-    fontWeight: 'bold',
-    marginTop: 5,
+  fieldLabelSpaced: {
+    marginTop: 14,
+  },
+  emailValue: {
+    fontSize: 16,
+    paddingVertical: 4,
+  },
+  saveButton: {
+    marginTop: 24,
   },
 });

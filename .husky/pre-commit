@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-exec < /dev/tty
+# Redirect stdin to /dev/tty only when available (allows non-interactive environments)
+[ -e /dev/tty ] && exec < /dev/tty || true
 
 echo "1. Running Typecheck..."
 yarn typecheck || exit 1

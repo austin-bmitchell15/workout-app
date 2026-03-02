@@ -2,15 +2,18 @@ import React from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 export default function AppLayout() {
   const router = useRouter();
+  const { colorScheme } = useAppTheme();
+  const isDark = colorScheme === 'dark';
 
   return (
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#007bff',
+          backgroundColor: isDark ? '#1c1c1e' : '#007bff',
         },
         headerTintColor: '#fff',
         headerTitleStyle: {

@@ -9,12 +9,18 @@ import StyledTextInput from '@/components/common/StyledTextInput';
 import StyledButton from '@/components/common/StyledButton';
 
 export default function SignUpScreen() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSignUp() {
+    if (!firstName.trim()) {
+      Alert.alert('Error', 'Please enter your first name.');
+      return;
+    }
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match.');
       return;
@@ -24,6 +30,12 @@ export default function SignUpScreen() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
+      },
     });
 
     if (error) {
@@ -40,6 +52,18 @@ export default function SignUpScreen() {
       <ThemedText type="title">Create an Account</ThemedText>
 
       <ThemedView style={styles.inputContainer}>
+        <StyledTextInput
+          placeholder="First Name"
+          value={firstName}
+          onChangeText={setFirstName}
+          autoCapitalize="words"
+        />
+        <StyledTextInput
+          placeholder="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+          autoCapitalize="words"
+        />
         <StyledTextInput
           placeholder="Email"
           value={email}
@@ -63,7 +87,7 @@ export default function SignUpScreen() {
       </ThemedView>
 
       <StyledButton
-        title={loading ? 'Logging in...' : 'Login'}
+        title={loading ? 'Creating account...' : 'Sign Up'}
         onPress={handleSignUp}
         type="primary"
         isLoading={loading}
@@ -84,11 +108,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     gap: 12,
-  },
-
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
   link: {
     marginTop: 16,

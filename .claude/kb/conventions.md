@@ -2,7 +2,9 @@
 
 ## TypeScript
 - Strict mode — no `any`, no implicit returns, no unchecked indexing
-- All shared types in `src/components/types.ts` — do not scatter type definitions
+- DB-derived types live in `src/types/supabase.ts` (auto-generated via Supabase MCP `generate_typescript_types`)
+- Domain types re-exported from `src/types/schema.ts` (e.g. `Profile`, `WorkoutRecord`, `Tables<>`, `Enums<>`)
+- **Regenerate `src/types/supabase.ts` via MCP after any schema changes** — never edit it manually
 - Use `interface` for object shapes, `type` for unions/aliases
 - Path alias: `@/*` → `src/*` — always use this in imports, never relative `../../`
 
@@ -48,9 +50,8 @@ if (error) throw error;
 Always check `error` before using `data`. Never swallow Supabase errors.
 
 ## Unit Conversion
-- All weights stored in the DB in **kg** (canonical unit)
+- `profile.weight_unit` holds the user's unit preference — type `'KG' | 'LB'` (uppercase, from `UNIT_TYPE` enum)
 - Convert on read/write using `kgToLbs` / `lbsToKg` from `@/utils/helpers`
-- `preferredUnit` comes from `profile.preferred_unit` ('kg' | 'lbs')
 - Conversion happens in `WorkoutService` — not in components
 
 ## Animations
@@ -59,10 +60,27 @@ Always check `error` before using `data`. Never swallow Supabase errors.
 - Always mock with `react-native-reanimated/mock` in tests
 
 ## Theming
-- Use `useThemeColor(props, colorName)` hook for dynamic colors
+Two valid patterns — pick based on component type:
+
+**Pattern A — Themed components** (for simple text/view wrappers):
+- Use `ThemedText` and `ThemedView` — they call `useThemeColor` internally
 - Light/dark palettes defined in `src/constants/theme.ts`
-- Use `ThemedText` and `ThemedView` for themed surfaces
-- Never hardcode colors inline — always use theme constants
+
+**Pattern B — Inline color map** (for screens with many distinct styled elements):
+```tsx
+const { colorScheme } = useAppTheme();
+const isDark = colorScheme === 'dark';
+const c = {
+  pageBg: isDark ? '#1c1c1e' : '#f2f2f7',
+  cardBg: isDark ? '#2c2c2e' : '#fff',
+  primaryText: isDark ? '#ECEDEE' : '#000',
+  secondaryText: isDark ? '#9BA1A6' : '#6e6e73',
+};
+// Then use: style={[styles.container, { backgroundColor: c.pageBg }]}
+```
+Used in: settings.tsx, profile.tsx, index.tsx, templates.tsx, (app)/_layout.tsx
+
+**Do not** hardcode colors like `backgroundColor: 'white'` or `color: '#333'` in screens.
 
 ## Error Handling
 - Surface errors to users via `Alert.alert(title, message)`
